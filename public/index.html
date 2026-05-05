@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily English — 오늘의 영어 일기</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410; --paper: #faf7f2; --paper-warm: #f5f0e8; --cream: #ede8df;
+    --accent: #c8602a; --accent-light: #e8936a; --sage: #6b8f71; --blue: #4a7ab5;
+    --muted: #9a8f84; --line: #e0d9cf; --shadow: rgba(26,20,16,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; position: relative; }
+  body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 31px, var(--line) 31px, var(--line) 32px); opacity: 0.4; pointer-events: none; z-index: 0; }
+  .app { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* HEADER */
+  .header { padding: 36px 0 24px; border-bottom: 2px solid var(--ink); margin-bottom: 24px; display: flex; align-items: flex-end; justify-content: space-between; }
+  .header-left h1 { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.1; }
+  .header-left .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .streak-badge { display: flex; align-items: center; gap: 6px; background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+
+  /* REVIEW BANNER */
+  .review-banner { background: var(--ink); color: var(--paper); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; cursor: pointer; transition: opacity 0.15s; position: relative; }
+  .review-banner:hover { opacity: 0.9; }
+  .review-banner-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-light); font-weight: 500; margin-bottom: 6px; }
+  .review-banner-text { font-family: 'Lora', serif; font-size: 15px; font-style: italic; line-height: 1.55; }
+  .review-banner-hint { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 8px; }
+  .review-banner-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 18px; line-height: 1; }
+  .review-banner-close:hover { color: white; }
+
+  /* DATE NAV */
+  .date-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .date-display { font-family: 'Lora', serif; font-size: 18px; font-style: italic; flex: 1; text-align: center; }
+  .nav-btn { background: none; border: 1.5px solid var(--line); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--muted); transition: all 0.15s; }
+  .nav-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 1.5px solid var(--line); margin-bottom: 28px; }
+  .tab { padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all 0.15s; white-space: nowrap; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* PROMPT */
+  .prompt-card { background: var(--paper-warm); border: 1.5px solid var(--line); border-left: 4px solid var(--sage); border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+  .prompt-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sage); font-weight: 500; margin-bottom: 6px; }
+  .prompt-text { font-family: 'Lora', serif; font-size: 15px; font-style: italic; line-height: 1.5; }
+  .prompt-refresh { background: none; border: none; font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 0 0; display: block; text-decoration: underline; font-family: 'DM Sans', sans-serif; }
+
+  /* WRITE */
+  .write-section { background: white; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px var(--shadow); margin-bottom: 20px; }
+  .write-label { padding: 14px 20px 0; font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .write-area { width: 100%; border: none; outline: none; padding: 12px 20px 20px; font-family: 'Lora', serif; font-size: 17px; line-height: 1.75; color: var(--ink); resize: none; background: transparent; min-height: 120px; }
+  .write-area::placeholder { color: #c5bdb5; font-style: italic; }
+  .write-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--paper-warm); }
+  .char-count { font-size: 12px; color: var(--muted); }
+  .toolbar-right { display: flex; gap: 8px; align-items: center; }
+  .mic-btn { width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line); background: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: all 0.15s; }
+  .mic-btn:hover { border-color: var(--accent); }
+  .mic-btn.recording { background: #fee; border-color: #e44; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,60,60,0.3);} 50%{box-shadow:0 0 0 8px rgba(220,60,60,0);} }
+  .submit-btn { padding: 10px 22px; background: var(--accent); color: white; border: none; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .submit-btn:hover { background: #b5551f; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ENTRY BLOCKS */
+  .today-entries { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .entry-block { background: white; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 8px var(--shadow); animation: slideIn 0.25s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+  .entry-block-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; background: var(--paper-warm); border-bottom: 1px solid var(--line); }
+  .entry-index { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .entry-header-right { display: flex; align-items: center; gap: 8px; }
+  .entry-score-mini { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); font-weight: 500; }
+  .mini-dots { display: flex; gap: 3px; }
+  .mini-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .mini-dot.filled { background: var(--accent-light); }
+  .entry-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; transition: all 0.15s; line-height: 1; }
+  .entry-delete:hover { color: #e44; background: #fee5e5; }
+  .entry-body { padding: 16px 18px; }
+  .entry-original { font-family: 'Lora', serif; font-size: 15px; color: var(--muted); font-style: italic; margin-bottom: 10px; line-height: 1.65; }
+  .entry-natural { font-family: 'Lora', serif; font-size: 16px; color: var(--ink); font-weight: 600; line-height: 1.65; margin-bottom: 12px; }
+  .entry-tips { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .entry-encouragement { margin-top: 12px; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; font-size: 13px; line-height: 1.55; }
+
+  .tip-explanation { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; margin-bottom: 2px; }
+  /* FILL-IN-THE-BLANK */
+  .fitb-block { background: var(--paper-warm); border: 1.5px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .fitb-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .fitb-sentence { font-family: 'Lora', serif; font-size: 15px; line-height: 1.7; color: var(--ink); margin-bottom: 10px; }
+  .fitb-blank {
+    display: inline-block;
+    border-bottom: 2px solid var(--accent);
+    min-width: 80px;
+    padding: 0 4px;
+    margin: 0 2px;
+    position: relative;
+  }
+  .fitb-input {
+    border: none; outline: none; background: transparent;
+    font-family: 'Lora', serif; font-size: 15px; color: var(--blue);
+    font-weight: 600; width: 100%; min-width: 60px;
+    padding: 0; line-height: 1.4;
+  }
+  .fitb-input.correct { color: var(--sage); }
+  .fitb-input.wrong { color: #e44; }
+  .fitb-actions { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+  .fitb-check-btn { padding: 5px 14px; background: var(--blue); color: white; border: none; border-radius: 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .fitb-check-btn:hover { background: #3a6a9e; }
+  .fitb-feedback { font-size: 12px; margin-top: 6px; padding: 6px 10px; border-radius: 6px; display: none; }
+  .fitb-feedback.show { display: block; }
+  .fitb-feedback.good { background: #edf7ef; color: #2a6b35; }
+  .fitb-feedback.bad { background: #fff4ec; color: #8a4010; }
+
+  /* LOADING */
+  .loading { display: flex; flex-direction: column; align-items: center; padding: 32px; gap: 14px; background: white; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 16px; }
+  .loading-dots { display: flex; gap: 6px; }
+  .loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-light); animation: bounce 1.2s infinite; }
+  .loading-dots span:nth-child(2){animation-delay:0.15s;} .loading-dots span:nth-child(3){animation-delay:0.3s;}
+  @keyframes bounce{0%,80%,100%{transform:scale(0.8);opacity:0.5;} 40%{transform:scale(1.1);opacity:1;}}
+  .loading-text { font-size: 13px; color: var(--muted); font-style: italic; }
+
+  /* EXPRESSIONS TAB */
+  .expr-header { margin-bottom: 20px; }
+  .expr-level-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: var(--paper); padding: 5px 12px; border-radius: 14px; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+  .expr-subtitle { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .expr-generate-btn { margin-top: 12px; padding: 10px 22px; background: var(--accent); color: white; border: none; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .expr-generate-btn:hover { background: #b5551f; }
+  .expr-generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .expr-card { background: white; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 8px var(--shadow); animation: slideIn 0.25s ease; }
+  .expr-card-header { padding: 11px 16px; background: var(--paper-warm); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .expr-source-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; padding: 3px 9px; border-radius: 10px; }
+  .expr-source-badge.news { background: #e8f0fb; color: var(--blue); }
+  .expr-source-badge.topic { background: #edf7ef; color: var(--sage); }
+  .expr-level-tag { font-size: 11px; color: var(--muted); }
+  .expr-body { padding: 16px 18px; }
+  .expr-phrase { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .expr-meaning { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .expr-example { font-family: 'Lora', serif; font-size: 15px; font-style: italic; color: var(--ink); line-height: 1.65; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; margin-bottom: 14px; }
+  .expr-context { font-size: 12px; color: var(--muted); margin-bottom: 14px; padding: 0 2px; line-height: 1.5; }
+  .expr-divider { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+  .expr-practice-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 8px; }
+  .expr-footer { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+  .expr-known-btn { padding: 6px 14px; border: 1.5px solid var(--sage); border-radius: 14px; background: none; color: var(--sage); font-size: 12px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; }
+  .expr-known-btn:hover { background: var(--sage); color: white; }
+  .expr-known-btn.marked { background: var(--sage); color: white; }
+  .expr-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-family: 'Lora', serif; font-size: 15px; font-style: italic; line-height: 1.7; }
+
+  /* PATTERNS TAB */
+  .patterns-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .patterns-header-title { font-family: 'Lora', serif; font-size: 16px; font-style: italic; color: var(--muted); }
+  .patterns-show-mastered { background: none; border: 1.5px solid var(--line); border-radius: 14px; padding: 5px 12px; font-size: 12px; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .patterns-show-mastered:hover { border-color: var(--sage); color: var(--sage); }
+  .patterns-empty { text-align: center; padding: 60px 20px; color: var(--muted); font-style: italic; font-family: 'Lora', serif; font-size: 16px; }
+  .pattern-group { background: white; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 14px; box-shadow: 0 1px 6px var(--shadow); }
+  .pattern-group-header { padding: 12px 18px; background: var(--paper-warm); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .pattern-group-name { font-size: 14px; font-weight: 500; }
+  .pattern-count-badge { font-size: 11px; background: var(--accent); color: white; padding: 2px 10px; border-radius: 10px; }
+  .pattern-row { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .pattern-row:last-child { border-bottom: none; }
+  .pattern-row.mastered { opacity: 0.4; }
+  .pattern-content { display: flex; gap: 8px; align-items: flex-start; flex: 1; }
+  .pattern-content::before { content: '→'; color: var(--sage); flex-shrink: 0; font-weight: 600; font-size: 13px; margin-top: 1px; }
+  .pattern-text { font-size: 13px; line-height: 1.5; }
+  .pattern-original { color: var(--muted); text-decoration: line-through; }
+  .pattern-better { color: var(--accent); font-weight: 500; margin-left: 4px; }
+  .pattern-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mastered-btn { flex-shrink: 0; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .mastered-btn.active { background: none; border: 1.5px solid var(--sage); color: var(--sage); }
+  .mastered-btn.active:hover { background: var(--sage); color: white; }
+  .mastered-btn.done { background: var(--sage); border: 1.5px solid var(--sage); color: white; }
+  .mastered-btn.done:hover { background: #e44; border-color: #e44; }
+  .mastered-section-title { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 20px 0 10px; font-weight: 500; }
+
+  /* HISTORY */
+  .history-empty { text-align: center; padding: 60px 20px; color: var(--muted); font-style: italic; font-family: 'Lora', serif; font-size: 16px; }
+  .history-list { display: flex; flex-direction: column; gap: 16px; }
+  .history-day { background: white; border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px var(--shadow); }
+  .history-day-header { padding: 12px 18px; background: var(--paper-warm); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .history-day-date { font-family: 'Lora', serif; font-size: 15px; font-style: italic; }
+  .history-day-count { font-size: 11px; color: var(--muted); background: var(--cream); padding: 3px 10px; border-radius: 10px; }
+  .history-entry-row { padding: 13px 18px; border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.12s; }
+  .history-entry-row:last-child { border-bottom: none; }
+  .history-entry-row:hover { background: var(--paper-warm); }
+  .history-entry-original { font-family: 'Lora', serif; font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .history-entry-natural { font-family: 'Lora', serif; font-size: 14px; color: var(--ink); font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .history-entry-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+  .history-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+  .history-dot.filled { background: var(--accent-light); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-box { background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 6px var(--shadow); }
+  .stat-number { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: var(--muted); }
+  .section-title { font-family: 'Lora', serif; font-size: 16px; font-style: italic; color: var(--muted); margin-bottom: 12px; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-label { font-size: 10px; text-align: center; color: var(--muted); font-weight: 500; padding-bottom: 4px; }
+  .cal-day { aspect-ratio: 1; border-radius: 6px; background: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); position: relative; }
+  .cal-day.done { background: var(--accent); color: white; font-weight: 500; }
+  .cal-day.today { border: 2px solid var(--accent); color: var(--accent); font-weight: 600; }
+  .cal-day.today.done { border: none; color: white; }
+  .cal-count { position: absolute; top: 1px; right: 2px; font-size: 7px; font-weight: 700; opacity: 0.85; }
+
+  /* SUBTABS */
+  .subtabs { display: flex; gap: 6px; margin-bottom: 20px; }
+  .subtab { padding: 6px 16px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--line); color: var(--muted); background: white; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .subtab:hover { border-color: var(--accent-light); color: var(--ink); }
+  .subtab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .subtab-panel { display: none; }
+  .subtab-panel.active { display: block; }
+
+  /* MISSION */
+  .mission-card { background: var(--ink); color: var(--paper); border-radius: 12px; padding: 16px 18px; margin-top: 4px; position: relative; transition: all 0.3s; }
+  .mission-card.done { background: var(--sage); }
+  .mission-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 6px; }
+  .mission-phrase { font-family: 'Lora', serif; font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .mission-meaning { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 10px; line-height: 1.4; }
+  .mission-status { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .mission-status.complete { color: white; font-weight: 500; }
+  .mission-complete-badge { position: absolute; top: 14px; right: 16px; font-size: 22px; }
+
+  /* VOCAB TAB */
+  .vocab-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .vocab-tab { padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--line); color: var(--muted); background: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .vocab-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .vocab-empty { text-align: center; padding: 50px 20px; color: var(--muted); font-style: italic; font-family: 'Lora', serif; font-size: 15px; line-height: 1.7; }
+  .vocab-list { display: flex; flex-direction: column; gap: 10px; }
+  .vocab-item { background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; box-shadow: 0 1px 4px var(--shadow); }
+  .vocab-item.known { border-left: 3px solid var(--sage); }
+  .vocab-item.mission-done { border-left: 3px solid var(--accent); }
+  .vocab-phrase { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+  .vocab-meaning { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .vocab-tag { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500; white-space: nowrap; margin-top: 2px; display: inline-block; }
+  .vocab-tag.learned { background: #e8f0fb; color: var(--blue); }
+  .vocab-tag.known { background: #edf7ef; color: var(--sage); }
+  .vocab-tag.mission { background: #fdf0e8; color: var(--accent); }
+  .vocab-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px; line-height: 1; flex-shrink: 0; }
+  .vocab-remove:hover { color: #e44; }
+
+  /* GROWTH TAB */
+  .growth-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+  .growth-stat { background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px; text-align: center; box-shadow: 0 1px 4px var(--shadow); }
+  .growth-stat-num { font-family: 'Lora', serif; font-size: 26px; font-weight: 600; color: var(--accent); line-height: 1; margin-bottom: 3px; }
+  .growth-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.3px; }
+  .growth-section { margin-bottom: 24px; }
+  .growth-section-title { font-family: 'Lora', serif; font-size: 15px; font-style: italic; color: var(--muted); margin-bottom: 12px; }
+  .growth-compare { display: flex; flex-direction: column; gap: 10px; }
+  .growth-compare-row { background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 4px var(--shadow); }
+  .growth-compare-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+  .growth-compare-text { font-family: 'Lora', serif; font-size: 14px; color: var(--ink); line-height: 1.6; font-style: italic; }
+  .growth-score-pill { background: var(--accent); color: white; font-size: 11px; padding: 2px 8px; border-radius: 8px; font-style: normal; }
+  .growth-score-pill.high { background: var(--sage); }
+  .growth-improvement { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px var(--shadow); }
+  .growth-improvement-icon { font-size: 20px; flex-shrink: 0; }
+  .growth-improvement-text { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .growth-improvement-text strong { color: var(--sage); }
+  .growth-report-btn { width: 100%; padding: 12px; border: 1.5px dashed var(--line); border-radius: 10px; background: none; font-size: 14px; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; margin-top: 4px; }
+  .growth-report-btn:hover { border-color: var(--accent); color: var(--accent); background: white; }
+  .growth-report-result { background: white; border: 1.5px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-top: 12px; box-shadow: 0 1px 8px var(--shadow); font-size: 14px; line-height: 1.75; color: var(--ink); display: none; }
+  .growth-report-result.show { display: block; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-label { font-size: 10px; text-align: center; color: var(--muted); font-weight: 500; padding-bottom: 4px; }
+  .cal-day { aspect-ratio: 1; border-radius: 6px; background: var(--cream); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); position: relative; }
+  .cal-day.done { background: var(--accent); color: white; font-weight: 500; }
+  .cal-day.today { border: 2px solid var(--accent); color: var(--accent); font-weight: 600; }
+  .cal-day.today.done { border: none; color: white; }
+  .cal-count { position: absolute; top: 1px; right: 2px; font-size: 7px; font-weight: 700; opacity: 0.85; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,20,16,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 16px; max-width: 580px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .modal-date { font-family: 'Lora', serif; font-size: 16px; font-style: italic; }
+  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); padding: 4px; line-height: 1; }
+  .modal-body { padding: 18px 22px 22px; }
+  .modal-label { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .score-dots { display: flex; gap: 5px; }
+  .score-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .score-dot.filled { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Daily English</h1>
+      <div class="subtitle">오늘도 한 줄씩, 자연스럽게</div>
+    </div>
+    <div class="streak-badge">✨ <span id="masteredCount">0</span>개 마스터</div>
+  </div>
+
+  <!-- REVIEW BANNER -->
+  <div class="review-banner" id="reviewBanner" style="display:none;" onclick="switchTab('learn');setTimeout(()=>switchSubtab('learn','patterns'),50)">
+    <button class="review-banner-close" onclick="event.stopPropagation();document.getElementById('reviewBanner').style.display='none'">×</button>
+    <div class="review-banner-label">📬 어제 틀린 표현</div>
+    <div class="review-banner-text" id="reviewBannerText"></div>
+    <div class="review-banner-hint">탭해서 패턴 복습하기 →</div>
+  </div>
+
+  <div class="date-nav">
+    <button class="nav-btn" id="prevDay" onclick="changeDay(-1)">←</button>
+    <div class="date-display" id="dateDisplay"></div>
+    <button class="nav-btn" id="nextDay" onclick="changeDay(1)">→</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('write')">✏️ 오늘</div>
+    <div class="tab"        onclick="switchTab('learn')">💡 배움</div>
+    <div class="tab"        onclick="switchTab('record')">📈 기록</div>
+  </div>
+
+  <!-- TODAY TAB -->
+  <div class="tab-panel active" id="tab-write">
+    <div class="today-entries" id="todayEntries"></div>
+    <div id="loadingSlot"></div>
+    <div class="prompt-card">
+      <div class="prompt-label">💡 주제 제안</div>
+      <div class="prompt-text" id="promptText"></div>
+      <button class="prompt-refresh" onclick="refreshPrompt()">다른 주제로 바꾸기</button>
+    </div>
+    <div class="write-section">
+      <div class="write-label" id="writeLabel">영어로 자유롭게 써보세요</div>
+      <textarea class="write-area" id="userInput" placeholder="Today I went to the store and buyed some food..."></textarea>
+      <div class="write-toolbar">
+        <span class="char-count" id="charCount">0자</span>
+        <div class="toolbar-right">
+          <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="음성">🎤</button>
+          <button class="submit-btn" id="submitBtn" onclick="submitEntry()">교정 받기 →</button>
+        </div>
+      </div>
+    </div>
+    <div id="missionSlot"></div>
+  </div>
+
+  <!-- LEARN TAB -->
+  <div class="tab-panel" id="tab-learn">
+    <div class="subtabs">
+      <div class="subtab active" onclick="switchSubtab('learn','expressions')">새 표현</div>
+      <div class="subtab"        onclick="switchSubtab('learn','vocab')">내 사전</div>
+      <div class="subtab"        onclick="switchSubtab('learn','patterns')">틀린 패턴</div>
+    </div>
+    <div class="subtab-panel active" id="sub-expressions"><div id="expressionsContent"></div></div>
+    <div class="subtab-panel"        id="sub-vocab"><div id="vocabContent"></div></div>
+    <div class="subtab-panel"        id="sub-patterns">
+      <div class="patterns-header">
+        <div class="patterns-header-title">자주 틀리는 표현 모음</div>
+        <button class="patterns-show-mastered" id="toggleMasteredBtn" onclick="toggleShowMastered()">✅ 해결된 것 보기</button>
+      </div>
+      <div id="patternsContent"></div>
+    </div>
+  </div>
+
+  <!-- RECORD TAB -->
+  <div class="tab-panel" id="tab-record">
+    <div class="subtabs">
+      <div class="subtab active" onclick="switchSubtab('record','history')">지난 일기</div>
+      <div class="subtab"        onclick="switchSubtab('record','stats')">성장 기록</div>
+    </div>
+    <div class="subtab-panel active" id="sub-history"><div id="historyContent"></div></div>
+    <div class="subtab-panel"        id="sub-stats"><div id="growthContent"></div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-date" id="modalDate"></div>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────
+let currentDate = new Date();
+let entries   = JSON.parse(localStorage.getItem('dailyEnglishV2_entries') || '{}');
+// mastered: Set of tip keys (category+original) the user marked as learned
+let mastered  = new Set(JSON.parse(localStorage.getItem('dailyEnglish_mastered') || '[]'));
+let showMastered = false;
+let recognition = null, isRecording = false;
+
+const PROMPTS = [
+  "오늘 하루 중 가장 기억에 남는 순간은?","오늘 먹은 것 중 제일 맛있었던 건?",
+  "요즘 가장 자주 생각하는 것은?","최근에 새로 시도해본 것이 있나요?",
+  "지금 이 순간 기분이 어떤가요?","요즘 가장 즐거운 시간은 언제인가요?",
+  "내일 기대되는 것이 있나요?","최근에 본 영화나 드라마 소개해보세요.",
+  "주말에 어디 가거나 뭔가 하고 싶다면?","오늘 배운 것, 느낀 것이 있다면?",
+  "오늘 하늘이나 날씨를 묘사해보세요.","가장 최근에 웃었던 순간은?",
+  "지금 가장 가고 싶은 곳은?","오늘 고마웠던 사람이나 순간이 있나요?",
+];
+let currentPromptIndex = Math.floor(Math.random() * PROMPTS.length);
+
+// ─── INIT ─────────────────────────────────────────────────
+function init() {
+  // attach input listener after DOM ready
+  const ta = document.getElementById('userInput');
+  if (ta) {
+    ta.addEventListener('input', () => { updateCharCount(); checkMissionInInput(); });
+  }
+  updateDateDisplay(); updateStreak(); renderTodayEntries(); updateWriteLabel();
+  document.getElementById('promptText').textContent = PROMPTS[currentPromptIndex];
+  showReviewBanner(); renderMission();
+}
+
+function getDateKey(d) { return d.toISOString().slice(0,10); }
+function formatDateKo(d) {
+  const days=['일','월','화','수','목','금','토'];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+}
+function updateDateDisplay() {
+  const todayKey=getDateKey(new Date()), currentKey=getDateKey(currentDate);
+  document.getElementById('dateDisplay').textContent =
+    currentKey===todayKey ? '오늘, '+formatDateKo(currentDate) : formatDateKo(currentDate);
+  document.getElementById('nextDay').disabled = currentKey >= todayKey;
+}
+function changeDay(delta) {
+  const d=new Date(currentDate); d.setDate(d.getDate()+delta);
+  if(d>new Date()) return;
+  currentDate=d; updateDateDisplay(); renderTodayEntries(); updateWriteLabel();
+  document.getElementById('userInput').value='';
+  document.getElementById('charCount').textContent='0자';
+  document.getElementById('loadingSlot').innerHTML='';
+}
+function refreshPrompt() {
+  currentPromptIndex=(currentPromptIndex+1)%PROMPTS.length;
+  document.getElementById('promptText').textContent=PROMPTS[currentPromptIndex];
+}
+function updateCharCount() {
+  document.getElementById('charCount').textContent=document.getElementById('userInput').value.trim().length+'자';
+}
+function updateWriteLabel() {
+  const count=(entries[getDateKey(currentDate)]||[]).length;
+  document.getElementById('writeLabel').textContent=count===0?'영어로 자유롭게 써보세요':`${count+1}번째 문장 추가`;
+}
+
+// ─── REVIEW BANNER ────────────────────────────────────────
+function showReviewBanner() {
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const arr=entries[getDateKey(yesterday)]||[];
+  if(!arr.length) return;
+  // pick a tip that's not yet mastered
+  const allTips=arr.flatMap(e=>(e.tips||[]).map(t=>({...t})));
+  const unmastered=allTips.filter(t=>!mastered.has(tipKey(t)));
+  const pick=unmastered.length ? unmastered[Math.floor(Math.random()*unmastered.length)] : allTips[0];
+  if(!pick) return;
+  document.getElementById('reviewBannerText').textContent=`"${pick.original}" → "${pick.better}" — ${pick.reason}`;
+  document.getElementById('reviewBanner').style.display='block';
+}
+
+function tipKey(t) { return (t.category||'기타')+'::'+t.original; }
+
+// ─── RENDER TODAY ─────────────────────────────────────────
+function renderTodayEntries() {
+  const dateKey=getDateKey(currentDate), dayArr=entries[dateKey]||[];
+  const container=document.getElementById('todayEntries');
+  if(!dayArr.length){container.innerHTML='';return;}
+  container.innerHTML=dayArr.map((e,i)=>buildEntryBlock(e,i,dateKey)).join('');
+}
+
+function buildEntryBlock(e, i, dateKey) {
+  const miniDots=Array.from({length:10},(_,j)=>`<div class="mini-dot ${j<e.fluencyScore?'filled':''}"></div>`).join('');
+  const timeTag=e.time?` <span style="color:var(--muted);font-size:11px;margin-left:4px;">${e.time}</span>`:'';
+
+  // Build tip explanation + fill-in-the-blank for each tip
+  const tipBlocks = (e.tips||[]).map((t,ti) => {
+    const fid = `fitb-${dateKey}-${i}-${ti}`;
+    const sentence = buildFITBSentence(e.naturalVersion, t.better, fid);
+    const hasBlank = sentence.includes('fitb-input');
+    return `
+      <div class="fitb-block">
+        <div class="tip-explanation">
+          <span style="color:var(--sage);font-weight:600;margin-right:6px;">→</span>
+          <span><strong>"${escapeHtml(t.original)}"</strong> 대신 <strong>"${escapeHtml(t.better)}"</strong>
+          <br><span style="color:var(--muted);font-size:12px;">${escapeHtml(t.reason)}</span></span>
+        </div>
+        ${hasBlank ? `
+        <div class="fitb-label" style="margin-top:10px;">✏️ 빈칸에 직접 써보세요 <span style="color:var(--accent);font-size:10px;">${t.category||''}</span></div>
+        <div class="fitb-sentence">${sentence}</div>
+        <div class="fitb-actions">
+          <button class="fitb-check-btn" onclick="checkFITB('${fid}','${escapeAttr(t.better)}')">확인</button>
+        </div>
+        <div class="fitb-feedback" id="fb-${fid}"></div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="entry-block">
+      <div class="entry-block-header">
+        <span class="entry-index">${i+1}번째${timeTag}</span>
+        <div class="entry-header-right">
+          <div class="entry-score-mini"><div class="mini-dots">${miniDots}</div><span>${e.fluencyScore}/10</span></div>
+          <button class="entry-delete" onclick="deleteEntry('${dateKey}',${i})">×</button>
+        </div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-original">"${escapeHtml(e.original)}"</div>
+        <div class="entry-natural">→ "${escapeHtml(e.naturalVersion)}"</div>
+        <div class="entry-tips">${tipBlocks}</div>
+        <div class="entry-encouragement">🌿 ${escapeHtml(e.encouragement)}</div>
+      </div>
+    </div>`;
+}
+
+// Build sentence with the target word replaced by an input blank
+// Verb conjugations (most common irregulars)
+const VERB_VARIANTS = {
+  'have':['have','has','had','having'],'be':['be','am','is','are','was','were','being','been'],
+  'do':['do','does','did','doing','done'],'go':['go','goes','went','going','gone'],
+  'get':['get','gets','got','getting','gotten'],'make':['make','makes','made','making'],
+  'take':['take','takes','took','taking','taken'],'give':['give','gives','gave','giving','given'],
+  'come':['come','comes','came','coming'],'see':['see','sees','saw','seeing','seen'],
+  'know':['know','knows','knew','knowing','known'],'think':['think','thinks','thought','thinking'],
+  'say':['say','says','said','saying'],'tell':['tell','tells','told','telling'],
+  'find':['find','finds','found','finding'],'feel':['feel','feels','felt','feeling'],
+  'leave':['leave','leaves','left','leaving'],'put':['put','puts','putting'],
+  'bring':['bring','brings','brought','bringing'],'keep':['keep','keeps','kept','keeping'],
+  'hold':['hold','holds','held','holding'],'stand':['stand','stands','stood','standing'],
+  'speak':['speak','speaks','spoke','speaking','spoken'],'run':['run','runs','ran','running'],
+  'break':['break','breaks','broke','breaking','broken']
+};
+const NOUN_PLACEHOLDERS = ['someone','somebody','sb','one','sth','something'];
+const POSS_PLACEHOLDERS = ["someone's","somebody's","one's","sb's","someones"];
+const POSS_PATTERN = "(?:my|your|his|her|its|our|their|[\\w]+'s)";
+
+function fitbWordToPattern(word, isFirst) {
+  const lower = word.toLowerCase().replace(/[.,!?;:]/g,'');
+  if (POSS_PLACEHOLDERS.includes(lower)) return POSS_PATTERN;
+  if (NOUN_PLACEHOLDERS.includes(lower)) return "[\\w]+";
+  if (VERB_VARIANTS[lower]) return '(?:' + VERB_VARIANTS[lower].map(escapeRegex).join('|') + ')';
+  // First word may be an unknown verb — allow -s/-ed/-ing
+  if (isFirst && lower.length >= 3 && /^[a-z]+$/.test(lower)) {
+    return '(?:' + escapeRegex(lower) + '(?:s|ed|ing)?)';
+  }
+  return escapeRegex(lower);
+}
+
+function buildFITBSentence(sentence, targetWord, fid) {
+  if (!sentence || !targetWord) return escapeHtml(sentence||'');
+
+  const blankHtml = (matchedText) => `<span class="fitb-blank"><input class="fitb-input" id="${fid}" size="${Math.max(matchedText.length+2,8)}" autocomplete="off" spellcheck="false" placeholder="..."></span>`;
+
+  // Strategy 1: exact phrase match (case-insensitive)
+  const reExact = new RegExp('(' + escapeRegex(targetWord) + ')', 'i');
+  const partsExact = sentence.split(reExact);
+  if (partsExact.length > 1) {
+    return partsExact.map(p => reExact.test(p) ? blankHtml(p) : escapeHtml(p)).join('');
+  }
+
+  // Strategy 2: flexible match — verb conjugation + placeholder substitution
+  try {
+    const words = targetWord.trim().split(/\s+/);
+    const flexPattern = '\\b' + words.map((w,i)=>fitbWordToPattern(w, i===0)).join('\\s+') + '\\b';
+    const reFlex = new RegExp('(' + flexPattern + ')', 'i');
+    const partsFlex = sentence.split(reFlex);
+    if (partsFlex.length > 1) {
+      return partsFlex.map(p => reFlex.test(p) ? blankHtml(p) : escapeHtml(p)).join('');
+    }
+  } catch(e) { /* malformed phrase, fall through */ }
+
+  // No reliable match — show example without blank rather than awkward fallback
+  return escapeHtml(sentence);
+}
+
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function checkFITB(fid, correct) {
+  const input = document.getElementById(fid);
+  const fb = document.getElementById('fb-' + fid);
+  if (!input) return;
+  const userVal = input.value.trim().toLowerCase();
+  const correctLower = correct.toLowerCase();
+
+  // Accept if: exact match OR user typed the key verb/noun from the phrase
+  const keyWords = correctLower.split(/\s+/).filter(w => w.length > 2);
+  const isCorrect = userVal === correctLower || keyWords.some(w => userVal.includes(w));
+
+  input.classList.toggle('correct', isCorrect);
+  input.classList.toggle('wrong', !isCorrect);
+  fb.className = 'fitb-feedback show ' + (isCorrect ? 'good' : 'bad');
+  fb.textContent = isCorrect
+    ? `✅ 맞아요! 정답: "${correct}"`
+    : `정답: "${correct}" — 다시 입력해봐요.`;
+  if (!isCorrect) { setTimeout(()=>{ input.value=''; input.classList.remove('wrong'); }, 1400); }
+}
+
+function deleteEntry(dateKey, index) {
+  if(!confirm('이 문장을 삭제할까요?')) return;
+  entries[dateKey].splice(index,1);
+  if(!entries[dateKey].length) delete entries[dateKey];
+  save(); renderTodayEntries(); updateWriteLabel(); updateStreak();
+}
+
+// ─── MIC ──────────────────────────────────────────────────
+function toggleMic() {
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('Chrome에서만 지원됩니다.');return;}
+  if(isRecording){recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR(); recognition.lang='en-US'; recognition.interimResults=true;
+  const mic=document.getElementById('micBtn'), ta=document.getElementById('userInput');
+  recognition.onstart=()=>{isRecording=true;mic.classList.add('recording');mic.textContent='⏹️';};
+  recognition.onresult=(e)=>{
+    let f=''; for(let i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal) f+=e.results[i][0].transcript;
+    if(f){ta.value+=(ta.value?' ':'')+f;updateCharCount();}
+  };
+  recognition.onend=()=>{isRecording=false;mic.classList.remove('recording');mic.textContent='🎤';};
+  recognition.onerror=()=>{isRecording=false;mic.classList.remove('recording');mic.textContent='🎤';};
+  recognition.start();
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────
+async function submitEntry() {
+  const text=document.getElementById('userInput').value.trim();
+  if(text.length<5){alert('영어로 좀 더 써주세요! (최소 5자)');return;}
+  const btn=document.getElementById('submitBtn'); btn.disabled=true;
+  document.getElementById('loadingSlot').innerHTML=`<div class="loading"><div class="loading-dots"><span></span><span></span><span></span></div><div class="loading-text">교정하는 중...</div></div>`;
+  try {
+    const res=await fetch('/api/claude',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a natural English coach for Korean intermediate learners.
+Respond ONLY with a JSON object (no markdown, no backticks):
+{
+  "naturalVersion": "most natural fluent version of the full sentence",
+  "fluencyScore": 6,
+  "tips": [{"original":"buyed","better":"bought","reason":"buy의 과거형은 bought","category":"동사 활용"}],
+  "encouragement": "warm 1-sentence in Korean"
+}
+fluencyScore 1-10. tips 2-4 items. IMPORTANT: "better" must be a word or short phrase that appears verbatim in naturalVersion so we can highlight it. category: one of [동사 활용, 전치사, 관사, 어휘 선택, 표현 자연성, 문장 구조, 시제, 기타].`,
+        messages:[{role:'user',content:text}]
+      })
+    });
+    if(!res.ok) throw new Error(`서버 오류 (${res.status}) — 잠시 후 다시 시도해주세요`);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||'API 오류');
+    const raw=data.content?.[0]?.text||'';
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const jsonMatch=clean.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('응답 형식 오류');
+    const result=JSON.parse(jsonMatch[0]);
+    const dateKey=getDateKey(currentDate);
+    const now=new Date();
+    const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    if(!entries[dateKey]) entries[dateKey]=[];
+    entries[dateKey].push({original:text,...result,time});
+    save();
+    document.getElementById('loadingSlot').innerHTML='';
+    document.getElementById('userInput').value='';
+    document.getElementById('charCount').textContent='0자';
+    renderTodayEntries(); updateWriteLabel(); updateStreak();
+    setTimeout(()=>{
+      const blocks=document.querySelectorAll('.entry-block');
+      if(blocks.length) blocks[blocks.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
+    },150);
+  } catch(err) {
+    document.getElementById('loadingSlot').innerHTML=`<div style="padding:16px;color:#e44;text-align:center;font-size:14px;background:white;border:1.5px solid var(--line);border-radius:12px;margin-bottom:16px;">⚠️ ${err.message||'오류가 발생했습니다.'}<br><small style="color:var(--muted)">잠시 후 다시 시도해주세요</small></div>`;
+  } finally { btn.disabled=false; }
+}
+
+function save() {
+  localStorage.setItem('dailyEnglishV2_entries', JSON.stringify(entries));
+  localStorage.setItem('dailyEnglish_mastered', JSON.stringify([...mastered]));
+}
+
+// ─── STATS ────────────────────────────────────────────────
+function updateStreak() { updateStats(); }
+function updateStats() {
+  document.getElementById('masteredCount').textContent = mastered.size;
+}
+
+// ─── MISSION ──────────────────────────────────────────────
+function getTodayMission() {
+  const todayKey = getDateKey(new Date());
+  const completedMissions = JSON.parse(localStorage.getItem('dailyEnglish_completedMissions') || '{}');
+  if (completedMissions[todayKey]) return { ...completedMissions[todayKey], done: true };
+  const vocab = getVocabItems();
+  if (!vocab.length) return null;
+  const known = vocab.filter(v => v.type === 'known');
+  const learned = vocab.filter(v => v.type === 'learned');
+  const pool = known.length ? known : learned;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  return pick ? { phrase: pick.phrase, meaning: pick.meaning, done: false } : null;
+}
+
+function renderMission() {
+  const slot = document.getElementById('missionSlot');
+  const mission = getTodayMission();
+  if (!mission) { slot.innerHTML = ''; return; }
+  slot.innerHTML = `
+    <div class="mission-card ${mission.done ? 'done' : ''}" id="missionCard">
+      ${mission.done ? '<div class="mission-complete-badge">✅</div>' : ''}
+      <div class="mission-label">🎯 오늘의 미션</div>
+      <div class="mission-phrase">${escapeHtml(mission.phrase)}</div>
+      <div class="mission-meaning">${escapeHtml(mission.meaning)}</div>
+      <div class="mission-status ${mission.done ? 'complete' : ''}" id="missionStatus">
+        ${mission.done ? '오늘 이 표현을 썼어요!' : '이 표현을 오늘 일기에 써보세요'}
+      </div>
+    </div>`;
+}
+
+function checkMissionInInput() {
+  const mission = getTodayMission();
+  if (!mission || mission.done) return;
+  const text = document.getElementById('userInput').value.toLowerCase();
+  if (text.includes(mission.phrase.toLowerCase())) completeMission(mission);
+}
+
+function completeMission(mission) {
+  const todayKey = getDateKey(new Date());
+  const cm = JSON.parse(localStorage.getItem('dailyEnglish_completedMissions') || '{}');
+  cm[todayKey] = { ...mission, done: true };
+  localStorage.setItem('dailyEnglish_completedMissions', JSON.stringify(cm));
+  renderMission();
+}
+
+// ─── VOCAB ────────────────────────────────────────────────
+function getVocabItems() { return JSON.parse(localStorage.getItem('dailyEnglish_vocab') || '[]'); }
+function saveVocab(vocab) { localStorage.setItem('dailyEnglish_vocab', JSON.stringify(vocab)); }
+
+function addToVocab(phrase, meaning, type) {
+  const vocab = getVocabItems();
+  if (vocab.find(v => v.phrase.toLowerCase() === phrase.toLowerCase())) return;
+  vocab.unshift({ phrase, meaning, type, addedAt: getDateKey(new Date()) });
+  saveVocab(vocab);
+}
+
+function removeFromVocab(phrase) {
+  saveVocab(getVocabItems().filter(v => v.phrase !== phrase));
+  renderVocab(currentVocabTab);
+}
+
+let currentVocabTab = 'all';
+
+function renderVocab(tab) {
+  currentVocabTab = tab || 'all';
+  const cm = JSON.parse(localStorage.getItem('dailyEnglish_completedMissions') || '{}');
+  const missionPhrases = new Set(Object.values(cm).map(m => m.phrase));
+  let vocab = getVocabItems();
+  if (currentVocabTab === 'learned') vocab = vocab.filter(v => v.type === 'learned');
+  if (currentVocabTab === 'known')   vocab = vocab.filter(v => v.type === 'known');
+  if (currentVocabTab === 'mission') vocab = vocab.filter(v => missionPhrases.has(v.phrase));
+  const container = document.getElementById('vocabContent');
+  const tabBtns = `<div class="vocab-tabs">${[['all','전체'],['learned','새로 배운'],['known','이미 알던'],['mission','미션 완료']].map(([t,l])=>`<button class="vocab-tab ${currentVocabTab===t?'active':''}" data-tab="${t}" onclick="renderVocab('${t}')">${l}</button>`).join('')}</div>`;
+  if (!vocab.length) {
+    const msgs = {all:'아직 저장된 표현이 없어요.<br>새 표현 탭에서 배운 표현을 추가해보세요 💡',learned:'새로 배운 표현이 없어요.',known:'이미 아는 표현이 없어요.',mission:'미션 완료한 표현이 없어요 🎯'};
+    container.innerHTML = tabBtns + `<div class="vocab-empty">${msgs[currentVocabTab]}</div>`;
+    return;
+  }
+  const items = vocab.map(v => {
+    const isMD = missionPhrases.has(v.phrase);
+    return `<div class="vocab-item ${v.type==='known'?'known':''} ${isMD?'mission-done':''}">
+      <div style="flex:1;">
+        <div class="vocab-phrase">${escapeHtml(v.phrase)}</div>
+        <div class="vocab-meaning">${escapeHtml(v.meaning)}</div>
+        <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="vocab-tag ${v.type==='known'?'known':'learned'}">${v.type==='known'?'이미 알던 표현':'새로 배운 표현'}</span>
+          ${isMD?'<span class="vocab-tag mission">🎯 미션 완료</span>':''}
+          <span style="font-size:10px;color:var(--muted);align-self:center;">${v.addedAt}</span>
+        </div>
+      </div>
+      <button class="vocab-remove" onclick="removeFromVocab('${escapeAttr(v.phrase)}')" title="삭제">×</button>
+    </div>`;
+  }).join('');
+  container.innerHTML = tabBtns + `<div class="vocab-list">${items}</div>`;
+}
+
+// ─── GROWTH TAB ───────────────────────────────────────────
+function renderGrowth() {
+  const allEntries = Object.values(entries).flat();
+  const now = new Date(), year = now.getFullYear(), month = now.getMonth();
+  let thisMonth = 0;
+  for (let d=1;d<=new Date(year,month+1,0).getDate();d++) {
+    const k=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(entries[k]?.length) thisMonth++;
+  }
+  const first10 = allEntries.slice(0,10), last10 = allEntries.slice(-10);
+  const avg = arr => arr.length ? (arr.reduce((s,e)=>s+(e.fluencyScore||6),0)/arr.length).toFixed(1) : null;
+  const avgFirst = avg(first10), avgLast = avg(last10);
+  const improvement = avgFirst && avgLast ? (avgLast - avgFirst).toFixed(1) : null;
+  const wc = e => (e.naturalVersion||e.original||'').split(/\s+/).filter(Boolean).length;
+  const avgWF = first10.length ? Math.round(first10.reduce((s,e)=>s+wc(e),0)/first10.length) : null;
+  const avgWL = last10.length  ? Math.round(last10.reduce((s,e)=>s+wc(e),0)/last10.length)  : null;
+  const firstE = allEntries[0], lastE = allEntries[allEntries.length-1];
+  const mAgo = new Date(); mAgo.setMonth(mAgo.getMonth()-1);
+  const mAgoKey = getDateKey(mAgo);
+  const mAgoEntries = Object.entries(entries).filter(([k])=>k<=mAgoKey).flatMap(([,v])=>v);
+  const mAgoE = mAgoEntries[mAgoEntries.length-1];
+  const totalTips = allEntries.flatMap(e=>e.tips||[]).length;
+
+  const statsHtml = `<div class="growth-stats">
+    <div class="growth-stat"><div class="growth-stat-num">${allEntries.length}</div><div class="growth-stat-label">총 문장 수</div></div>
+    <div class="growth-stat"><div class="growth-stat-num">${thisMonth}</div><div class="growth-stat-label">이번 달 쓴 날</div></div>
+    <div class="growth-stat"><div class="growth-stat-num">${mastered.size}</div><div class="growth-stat-label">마스터 표현</div></div>
+  </div>`;
+
+  const impHtml = improvement ? `<div class="growth-section"><div class="growth-section-title">실력 변화</div>
+    <div class="growth-improvement"><div class="growth-improvement-icon">${parseFloat(improvement)>=0?'📈':'📊'}</div>
+      <div class="growth-improvement-text">fluency 점수 <strong>${avgFirst} → ${avgLast}</strong>${parseFloat(improvement)>0?` <strong>(+${improvement}점 향상!)</strong>`:' (유지 중)'}</div></div>
+    ${avgWF&&avgWL?`<div class="growth-improvement"><div class="growth-improvement-icon">✍️</div>
+      <div class="growth-improvement-text">문장 평균 길이 <strong>${avgWF}단어 → ${avgWL}단어</strong>${avgWL>avgWF?' <strong>(더 풍부해졌어요!)</strong>':''}</div></div>`:''}
+    ${mastered.size?`<div class="growth-improvement"><div class="growth-improvement-icon">✅</div>
+      <div class="growth-improvement-text">총 <strong>${totalTips}개</strong> 실수 중 <strong>${mastered.size}개</strong> 마스터 완료</div></div>`:''}
+  </div>` : '';
+
+  const cmpHtml = (firstE||lastE) ? `<div class="growth-section"><div class="growth-section-title">처음 vs 지금</div><div class="growth-compare">
+    ${firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>처음 쓴 문장</span><span class="growth-score-pill">${firstE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(firstE.original)}"</div></div>`:''}
+    ${lastE&&lastE!==firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>가장 최근 문장</span><span class="growth-score-pill high">${lastE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(lastE.original)}"</div></div>`:''}
+    ${mAgoE&&mAgoE!==firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>한 달 전 문장</span><span class="growth-score-pill">${mAgoE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(mAgoE.original)}"</div></div>`:''}
+  </div></div>` : '';
+
+  const emptyHtml = !allEntries.length ? '<div class="vocab-empty">아직 일기가 없어요.<br>오늘 첫 문장을 써보면 성장 기록이 시작돼요 ✍️</div>' : '';
+
+  document.getElementById('growthContent').innerHTML = statsHtml + emptyHtml + impHtml + cmpHtml +
+    `<div class="growth-section"><div class="growth-section-title">이번 달 출석</div><div class="calendar-grid" id="calendarGrid"></div></div>
+     <div class="growth-section"><div class="growth-section-title">월별 심층 리포트</div>
+       <button class="growth-report-btn" onclick="generateGrowthReport()" id="growthReportBtn">✨ AI 실력 분석 받기</button>
+       <div class="growth-report-result" id="growthReportResult"></div>
+     </div>`;
+  renderCalendar();
+}
+
+async function generateGrowthReport() {
+  const btn = document.getElementById('growthReportBtn');
+  const result = document.getElementById('growthReportResult');
+  btn.disabled=true; btn.textContent='분석 중...';
+  const allEntries = Object.values(entries).flat();
+  if (allEntries.length < 3) {
+    result.className='growth-report-result show'; result.textContent='문장이 3개 이상 있어야 분석할 수 있어요.';
+    btn.disabled=false; btn.textContent='✨ AI 실력 분석 받기'; return;
+  }
+  const sample = allEntries.slice(-20).map(e=>`[${e.fluencyScore}/10] ${(e.original||'').replace(/`/g,"'")} → ${(e.naturalVersion||'').replace(/`/g,"'")}`).join('\n');
+  const tipSummary = allEntries.flatMap(e=>e.tips||[]).reduce((acc,t)=>{ acc[t.category||'기타']=(acc[t.category||'기타']||0)+1; return acc; },{});
+  const userContent = `Recent entries:\n${sample}\n\nError categories: ${JSON.stringify(tipSummary)}\nMastered: ${mastered.size} patterns`;
+  try {
+    const res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+        system:'You are an English learning coach. Analyze the learner writing samples and respond ONLY with a JSON object (no markdown, no backticks, no explanation before or after):\n{\n  "overall": "2-sentence warm overall impression in Korean",\n  "strengths": ["strength 1 in Korean", "strength 2 in Korean"],\n  "improvements": ["specific improvement 1 with example in Korean", "specific improvement 2 in Korean"],\n  "focusNext": "one concrete actionable tip for this week in Korean"\n}\nKeep each Korean field concise (under 80 characters) so the JSON fits within the token limit.',
+        messages:[{role:'user',content:userContent}]})});
+    if(!res.ok) throw new Error(`서버 오류 (${res.status}) — 잠시 후 다시 시도해주세요`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||'API 오류');
+    const raw2 = data.content?.[0]?.text||'';
+    const clean2 = raw2.replace(/```json|```/g,'').trim();
+    const objMatch = clean2.match(/\{[\s\S]*\}/);
+    if(!objMatch) { console.error('[AI 분석] JSON not found in response:', raw2); throw new Error('응답 형식 오류 (JSON 없음)'); }
+    let r;
+    try { r = JSON.parse(objMatch[0]); }
+    catch(parseErr) { console.error('[AI 분석] JSON parse failed. Raw response:', raw2); throw new Error('응답이 잘렸어요'); }
+    if(!r.overall||!Array.isArray(r.strengths)||!Array.isArray(r.improvements)||!r.focusNext) { console.error('[AI 분석] Missing fields:', r); throw new Error('응답 항목 누락'); }
+    result.className='growth-report-result show';
+    result.innerHTML = `
+      <div style="margin-bottom:14px;font-size:14px;line-height:1.7;color:var(--ink);">${escapeHtml(r.overall)}</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--sage);font-weight:600;margin-bottom:8px;">✅ 잘 하고 있는 것</div>
+        ${r.strengths.map(s=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.5;margin-bottom:6px;"><span style="color:var(--sage);flex-shrink:0;">•</span><span>${escapeHtml(s)}</span></div>`).join('')}
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:8px;">💡 개선할 부분</div>
+        ${r.improvements.map(s=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.5;margin-bottom:6px;"><span style="color:var(--accent);flex-shrink:0;">•</span><span>${escapeHtml(s)}</span></div>`).join('')}
+      </div>
+      <div style="background:var(--paper-warm);border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.6;">
+        <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:5px;">🎯 이번 주 집중 과제</span>
+        ${escapeHtml(r.focusNext)}
+      </div>`;
+    btn.textContent='🔄 다시 분석받기';
+  } catch(err) { result.className='growth-report-result show'; result.textContent=`⚠️ ${err.message||'오류가 발생했어요.'} 잠시 후 다시 시도해주세요.`; btn.textContent='✨ AI 실력 분석 받기'; }
+  btn.disabled=false;
+}
+
+function renderCalendar() {
+  const el=document.getElementById('calendarGrid'); if(!el) return;
+  const now=new Date(),year=now.getFullYear(),month=now.getMonth();
+  const firstDay=new Date(year,month,1).getDay(),daysInMonth=new Date(year,month+1,0).getDate(),todayKey=getDateKey(now);
+  let html=['일','월','화','수','목','금','토'].map(l=>`<div class="cal-label">${l}</div>`).join('');
+  for(let i=0;i<firstDay;i++) html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const key=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const count=(entries[key]||[]).length,isToday=key===todayKey;
+    html+=`<div class="cal-day ${count?'done':''} ${isToday?'today':''}">${d}${count>1?`<span class="cal-count">${count}</span>`:''}</div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ─── PATTERNS ─────────────────────────────────────────────
+function toggleShowMastered() {
+  showMastered = !showMastered;
+  document.getElementById('toggleMasteredBtn').textContent = showMastered ? '✅ 해결된 것 숨기기' : '✅ 해결된 것 보기';
+  renderPatterns();
+}
+
+function toggleMastered(key) {
+  if(mastered.has(key)) mastered.delete(key);
+  else mastered.add(key);
+  save(); updateStats(); renderPatterns();
+}
+
+function renderPatterns() {
+  // collect all tips with metadata
+  const allTips = [];
+  Object.entries(entries).sort().reverse().forEach(([dateKey, dayArr]) => {
+    const d=new Date(dateKey+'T00:00:00');
+    const dateStr=`${d.getMonth()+1}/${d.getDate()}`;
+    dayArr.forEach(e => (e.tips||[]).forEach(t => allTips.push({...t, dateStr, key:tipKey(t)})));
+  });
+
+  if(!allTips.length){
+    document.getElementById('patternsContent').innerHTML='<div class="patterns-empty">아직 교정 기록이 없어요.<br>일기를 써보면 패턴이 쌓여요 📌</div>';
+    return;
+  }
+
+  // group by category, deduplicate by original
+  const grouped = {};
+  const seen = {};
+  allTips.forEach(t => {
+    const cat=t.category||'기타';
+    const dedupeKey=cat+'::'+t.original.toLowerCase();
+    if(!seen[dedupeKey]) { seen[dedupeKey]=true; if(!grouped[cat]) grouped[cat]=[]; grouped[cat].push(t); }
+  });
+
+  const activeCats = Object.entries(grouped).sort((a,b)=>b[1].length-a[1].length);
+
+  let html = '';
+  activeCats.forEach(([cat, tips]) => {
+    const active = tips.filter(t => !mastered.has(t.key));
+    const done   = tips.filter(t =>  mastered.has(t.key));
+    const visibleActive = active;
+    const visibleDone   = showMastered ? done : [];
+
+    if(!visibleActive.length && !visibleDone.length) return;
+
+    const makeRow = (t, isMastered) => `
+      <div class="pattern-row ${isMastered?'mastered':''}">
+        <div class="pattern-content">
+          <div class="pattern-text">
+            <span class="pattern-original">${escapeHtml(t.original)}</span>
+            <span class="pattern-better">${escapeHtml(t.better)}</span>
+            <div class="pattern-meta">${t.dateStr} — ${escapeHtml(t.reason)}</div>
+          </div>
+        </div>
+        <button class="mastered-btn ${isMastered?'done':'active'}" onclick="toggleMastered('${t.key.replace(/'/g,"\\'")}')">
+          ${isMastered ? '↩ 되돌리기' : '✅ 이제 알았어요'}
+        </button>
+      </div>`;
+
+    const activeRows = visibleActive.map(t=>makeRow(t,false)).join('');
+    const doneRows   = visibleDone.map(t=>makeRow(t,true)).join('');
+
+    html += `
+      <div class="pattern-group">
+        <div class="pattern-group-header">
+          <div class="pattern-group-name">${cat}</div>
+          <div class="pattern-count-badge">${active.length}개 남음</div>
+        </div>
+        ${activeRows}${doneRows}
+      </div>`;
+  });
+
+  if(!html) html='<div class="patterns-empty">미해결 패턴이 없어요! 🎉<br>모두 마스터했어요.</div>';
+  document.getElementById('patternsContent').innerHTML=html;
+}
+
+// ─── EXPRESSIONS ──────────────────────────────────────────
+// knownExprs: Set of expression phrases user marked as already known
+let knownExprs = new Set(JSON.parse(localStorage.getItem('dailyEnglish_knownExprs') || '[]'));
+let cachedExprs = JSON.parse(localStorage.getItem('dailyEnglish_cachedExprs') || 'null');
+let cachedExprsDate = localStorage.getItem('dailyEnglish_cachedExprsDate') || '';
+
+function computeLevelProfile() {
+  // average fluency score from recent entries
+  const allEntries = Object.values(entries).flat();
+  if (!allEntries.length) return { avgScore: 6, level: 'intermediate', knownPhrases: [] };
+  const recent = allEntries.slice(-20);
+  const avg = recent.reduce((s,e) => s + (e.fluencyScore||6), 0) / recent.length;
+  const level = avg <= 4 ? 'elementary' : avg <= 6.5 ? 'intermediate' : avg <= 8.5 ? 'upper-intermediate' : 'advanced';
+  // collect recent topics from originals
+  const topics = recent.map(e => e.original).join(' ').slice(0, 400);
+  const knownPhrases = [...knownExprs].slice(-10);
+  return { avgScore: Math.round(avg*10)/10, level, topics, knownPhrases };
+}
+
+function renderExpressions() {
+  const todayKey = getDateKey(new Date());
+  const profile = computeLevelProfile();
+  const levelLabel = { elementary:'초급+', intermediate:'중급', 'upper-intermediate':'중상급', advanced:'고급' }[profile.level] || '중급';
+  const hasEntries = Object.values(entries).flat().length > 0;
+
+  const headerHtml = `
+    <div class="expr-header">
+      <div class="expr-level-badge">📊 현재 레벨: ${levelLabel} (평균 ${profile.avgScore}/10)</div>
+      <div class="expr-subtitle">오늘의 일기 내용과 실력을 분석해서<br>딱 한 단계 위의 표현을 추천해드려요.</div>
+      <button class="expr-generate-btn" id="exprGenBtn" onclick="generateExpressions()">
+        ${cachedExprs && cachedExprsDate === todayKey ? '🔄 다시 추천받기' : '✨ 오늘의 표현 추천받기'}
+      </button>
+    </div>`;
+
+  if (cachedExprs && cachedExprsDate === todayKey) {
+    document.getElementById('expressionsContent').innerHTML = headerHtml + renderExprCards(cachedExprs);
+  } else {
+    document.getElementById('expressionsContent').innerHTML = headerHtml + (hasEntries ? '' :
+      '<div class="expr-empty">오늘의 일기를 먼저 써보세요.<br>쓴 내용을 바탕으로 딱 맞는 표현을 추천해줄게요 ✍️</div>');
+  }
+}
+
+function renderExprCards(exprs) {
+  return exprs.map((ex, i) => {
+    const fid = `expr-fitb-${i}`;
+    const isKnown = knownExprs.has(ex.phrase);
+    const sentence = buildFITBSentence(ex.example, ex.phrase, fid);
+    const hasBlank = sentence.includes('fitb-input');
+    const isNews = ex.source === 'news';
+    const sourceClass = isNews ? 'news' : 'topic';
+    const sourceLabel = isNews ? '📰 뉴스 표현' : '🗣️ 주제 연관';
+
+    // news outlink: Google News search
+    const searchUrl = ex.newsSearchQuery
+      ? `https://www.google.com/search?q=${encodeURIComponent(ex.newsSearchQuery)}&tbm=nws`
+      : null;
+
+    const newsLinkHtml = isNews && searchUrl ? `
+      <a href="${searchUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--blue);text-decoration:none;margin-top:6px;padding:4px 10px;border:1px solid var(--blue);border-radius:12px;width:fit-content;">
+        🔗 ${escapeHtml(ex.newsSource||'관련 뉴스')} 에서 더 보기 ↗
+      </a>` : '';
+
+    return `
+      <div class="expr-card" id="exprCard-${i}">
+        <div class="expr-card-header">
+          <span class="expr-source-badge ${sourceClass}">${sourceLabel}</span>
+          <span class="expr-level-tag">${ex.levelTag || ''}</span>
+        </div>
+        <div class="expr-body">
+          <div class="expr-phrase">${escapeHtml(ex.phrase)}</div>
+          <div class="expr-meaning">${escapeHtml(ex.meaning)}</div>
+          <div class="expr-example">"${escapeHtml(ex.example)}"</div>
+          <div class="expr-context">${escapeHtml(ex.context)}</div>
+          ${newsLinkHtml}
+          ${hasBlank ? `
+          <hr class="expr-divider">
+          <div class="expr-practice-label">✏️ 빈칸에 직접 써보세요</div>
+          <div class="fitb-sentence" style="margin-bottom:10px;">${sentence}</div>
+          <div class="fitb-actions">
+            <button class="fitb-check-btn" onclick="checkFITB('${fid}','${escapeAttr(ex.phrase)}')">확인</button>
+          </div>
+          <div class="fitb-feedback" id="fb-${fid}"></div>` : ''}
+          <div class="expr-footer">
+            <button class="expr-known-btn ${isKnown?'marked':''}" id="knownBtn-${i}" onclick="toggleKnown(${i}, '${escapeAttr(ex.phrase)}')">
+              ${isKnown ? '✅ 이미 알고 있어요' : '이미 아는 표현이에요'}
+            </button>
+            <button class="expr-known-btn" style="border-color:var(--blue);color:var(--blue);" onclick="saveLearnedExpr(${i},'${escapeAttr(ex.phrase)}','${escapeAttr(ex.meaning)}')">
+              📚 사전에 저장
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function generateExpressions() {
+  const btn = document.getElementById('exprGenBtn');
+  btn.disabled = true; btn.textContent = '분석 중...';
+
+  const profile = computeLevelProfile();
+  const recentText = Object.values(entries).flat().slice(-5).map(e=>e.original).join('\n');
+  const knownList = [...knownExprs].slice(-15).join(', ');
+
+  try {
+    const res = await fetch('/api/claude', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        system:`You are an English expression coach for a Korean learner at ${profile.level} level (average fluency score ${profile.avgScore}/10).
+Respond ONLY with a valid JSON array (no markdown, no backticks) of exactly 3 expression objects.
+
+The learner's recent diary entries:
+"""
+${recentText || '(no entries yet)'}
+"""
+
+Expressions the learner already knows (do NOT suggest these): ${knownList || 'none'}
+
+Rules:
+- 2 expressions should be slightly above their current level (one step up), related to their diary topics
+- 1 expression must be from real English-language news media (BBC, NYT, Reuters, Guardian, etc.)
+- CRITICAL: "example" sentence must contain "phrase" VERBATIM (exact spelling) — no conjugation changes
+- "levelTag" should be one of: B1, B2, C1
+- For the news item, include: which outlet + rough time period + what story it appeared in
+
+Return exactly this structure:
+[
+  {
+    "phrase": "stand by someone",
+    "meaning": "누군가의 편을 들다, 지지하다",
+    "example": "She always stand by someone she loves whenever things get hard.",
+    "context": "인간관계나 갈등 상황에서 자주 쓰는 표현이에요. 'stand in my side'보다 훨씬 자연스러워요.",
+    "source": "topic",
+    "levelTag": "B2",
+    "newsSource": null,
+    "newsSearchQuery": null
+  },
+  {
+    "phrase": "ramp up",
+    "meaning": "급격히 늘리다, 강화하다",
+    "example": "Governments worldwide decided to ramp up renewable energy investment.",
+    "context": "BBC, Reuters 등에서 기후변화·경제 관련 보도에 매우 자주 등장해요. 2023-2024년 에너지 전환 기사에서 특히 많이 쓰였어요.",
+    "source": "news",
+    "levelTag": "B2",
+    "newsSource": "BBC News",
+    "newsSearchQuery": "ramp up renewable energy BBC"
+  }
+]
+source: "news" for exactly 1 item, "topic" for the other 2.
+newsSource: outlet name for news item, null for topic items.
+newsSearchQuery: 4-6 word search query that would find real articles using this phrase, null for topic items.`,
+        messages:[{role:'user', content:'Generate 3 expressions now.'}]
+      })
+    });
+    if(!res.ok) throw new Error(`서버 오류 (${res.status}) — 잠시 후 다시 시도해주세요`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||'API 오류');
+    const raw = data.content?.[0]?.text||'';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const arrMatch = clean.match(/\[[\s\S]*\]/);
+    if(!arrMatch) throw new Error('응답 형식 오류');
+    const exprs = JSON.parse(arrMatch[0]);
+
+    cachedExprs = exprs;
+    cachedExprsDate = getDateKey(new Date());
+    localStorage.setItem('dailyEnglish_cachedExprs', JSON.stringify(exprs));
+    localStorage.setItem('dailyEnglish_cachedExprsDate', cachedExprsDate);
+
+    renderExpressions();
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = '다시 시도하기';
+    document.getElementById('expressionsContent').innerHTML +=
+      `<div style="color:#e44;font-size:13px;padding:12px;text-align:center;">⚠️ ${err.message||'오류가 발생했습니다.'}<br><small style="color:var(--muted)">잠시 후 다시 시도해주세요</small></div>`;
+  }
+}
+
+function saveLearnedExpr(index, phrase, meaning) {
+  addToVocab(phrase, meaning, 'learned');
+  const btn = event.target;
+  btn.textContent = '✅ 저장됨';
+  btn.style.background = 'var(--blue)';
+  btn.style.color = 'white';
+  btn.disabled = true;
+}
+
+function toggleKnown(index, phrase) {
+  const ex = cachedExprs && cachedExprs[index];
+  if (knownExprs.has(phrase)) {
+    knownExprs.delete(phrase);
+  } else {
+    knownExprs.add(phrase);
+    // save to vocab as 'known'
+    if (ex) addToVocab(phrase, ex.meaning, 'known');
+    updateStats();
+  }
+  localStorage.setItem('dailyEnglish_knownExprs', JSON.stringify([...knownExprs]));
+  const btn = document.getElementById(`knownBtn-${index}`);
+  if (btn) {
+    const isKnown = knownExprs.has(phrase);
+    btn.textContent = isKnown ? '✅ 이미 알고 있어요' : '이미 아는 표현이에요';
+    btn.classList.toggle('marked', isKnown);
+    if (isKnown) btn.insertAdjacentHTML('afterend','<div style="font-size:11px;color:var(--sage);margin-top:6px;text-align:right;">📚 내 사전에 저장됐어요. 다음 추천은 더 어려운 표현으로!</div>');
+  }
+}
+
+// ─── HISTORY ──────────────────────────────────────────────
+function renderHistory() {
+  const allDays=Object.keys(entries).filter(k=>entries[k].length).sort().reverse();
+  if(!allDays.length){
+    document.getElementById('historyContent').innerHTML='<div class="history-empty">아직 기록이 없어요.<br>오늘 첫 영어 일기를 써보세요 ✍️</div>';
+    return;
+  }
+  const html=allDays.map(dateKey=>{
+    const dayArr=entries[dateKey],d=new Date(dateKey+'T00:00:00');
+    const rows=dayArr.map((e,i)=>{
+      const dots=Array.from({length:10},(_,j)=>`<div class="history-dot ${j<e.fluencyScore?'filled':''}"></div>`).join('');
+      return `<div class="history-entry-row" onclick="openModal('${dateKey}',${i})">
+        <div class="history-entry-original">${escapeHtml(e.original)}</div>
+        <div class="history-entry-natural">"${escapeHtml(e.naturalVersion)}"</div>
+        <div class="history-entry-meta">${dots}${e.time?`<span style="font-size:11px;color:var(--muted);margin-left:4px;">${e.time}</span>`:''}</div>
+      </div>`;
+    }).join('');
+    return `<div class="history-day">
+      <div class="history-day-header"><div class="history-day-date">${formatDateKo(d)}</div><div class="history-day-count">${dayArr.length}문장</div></div>
+      ${rows}</div>`;
+  }).join('');
+  document.getElementById('historyContent').innerHTML=`<div class="history-list">${html}</div>`;
+}
+
+function openModal(dateKey,index){
+  const e=(entries[dateKey]||[])[index]; if(!e) return;
+  const d=new Date(dateKey+'T00:00:00');
+  document.getElementById('modalDate').textContent=`${formatDateKo(d)} — ${index+1}번째`;
+  const dots=Array.from({length:10},(_,i)=>`<div class="score-dot ${i<e.fluencyScore?'filled':''}"></div>`).join('');
+  const tips=e.tips.map(t=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.5;margin-bottom:8px;"><span style="color:var(--sage);font-weight:600;">→</span><span><strong>"${escapeHtml(t.original)}"</strong> → <strong>"${escapeHtml(t.better)}"</strong><br><span style="color:var(--muted);font-size:12px;">${escapeHtml(t.reason)}</span></span></div>`).join('');
+  document.getElementById('modalBody').innerHTML=`
+    <div class="score-row"><span style="font-size:13px;color:var(--muted);">자연스러움</span><div class="score-dots">${dots}</div><span style="font-size:13px;color:var(--muted);margin-left:auto;">${e.fluencyScore}/10</span></div>
+    <div style="margin-bottom:14px;"><div class="modal-label">📝 내가 쓴 표현</div><div style="font-family:'Lora',serif;font-size:15px;color:var(--muted);font-style:italic;line-height:1.65;">"${escapeHtml(e.original)}"</div></div>
+    <div style="margin-bottom:14px;"><div class="modal-label">✨ 더 자연스러운 영어</div><div style="font-family:'Lora',serif;font-size:16px;color:var(--ink);font-weight:600;line-height:1.65;">"${escapeHtml(e.naturalVersion)}"</div></div>
+    <div style="margin-bottom:14px;"><div class="modal-label">💡 개선 포인트</div>${tips}</div>
+    <div style="padding:12px 14px;background:var(--paper-warm);border-radius:8px;font-size:13px;line-height:1.6;">🌿 ${escapeHtml(e.encouragement)}</div>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e){if(e.target.id==='modalOverlay') document.getElementById('modalOverlay').classList.remove('open');}
+
+// ─── TABS ─────────────────────────────────────────────────
+function switchTab(tab) {
+  const names=['write','learn','record'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  // trigger default subtab content
+  if(tab==='learn') {
+    const active = document.querySelector('#tab-learn .subtab.active');
+    const which = active ? active.textContent.trim() : '새 표현';
+    if(which==='새 표현') renderExpressions();
+    else if(which==='내 사전') renderVocab(currentVocabTab);
+    else if(which==='틀린 패턴') renderPatterns();
+    // default to expressions on first open
+    if(!active) renderExpressions();
+  }
+  if(tab==='record') {
+    const active = document.querySelector('#tab-record .subtab.active');
+    const which = active ? active.textContent.trim() : '지난 일기';
+    if(which==='지난 일기'||!active) renderHistory();
+    else renderGrowth();
+  }
+}
+
+function switchSubtab(parent, sub) {
+  const panel = document.getElementById('tab-'+parent);
+  panel.querySelectorAll('.subtab').forEach((t,i)=>{
+    const subs = parent==='learn' ? ['expressions','vocab','patterns'] : ['history','stats'];
+    t.classList.toggle('active', subs[i]===sub);
+  });
+  panel.querySelectorAll('.subtab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('sub-'+sub).classList.add('active');
+  if(sub==='expressions') renderExpressions();
+  else if(sub==='vocab') renderVocab(currentVocabTab);
+  else if(sub==='patterns') renderPatterns();
+  else if(sub==='history') renderHistory();
+  else if(sub==='stats') renderGrowth();
+}
+
+function escapeHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escapeAttr(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+
+init();
+</script>
+</body>
+</html>
