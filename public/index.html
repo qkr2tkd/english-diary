@@ -626,7 +626,7 @@ async function submitEntry() {
     const res=await fetch('/api/claude',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        model:'claude-sonnet-4-5-20250929',max_tokens:1000,
         system:`You are a natural English coach for Korean intermediate learners.
 Respond ONLY with a JSON object (no markdown, no backticks):
 {
@@ -842,7 +842,7 @@ async function generateGrowthReport() {
   const userContent = `Recent entries:\n${sample}\n\nError categories: ${JSON.stringify(tipSummary)}\nMastered: ${mastered.size} patterns`;
   try {
     const res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+      body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:1500,
         system:'You are an English learning coach. Analyze the learner writing samples and respond ONLY with a JSON object (no markdown, no backticks, no explanation before or after):\n{\n  "overall": "2-sentence warm overall impression in Korean",\n  "strengths": ["strength 1 in Korean", "strength 2 in Korean"],\n  "improvements": ["specific improvement 1 with example in Korean", "specific improvement 2 in Korean"],\n  "focusNext": "one concrete actionable tip for this week in Korean"\n}\nKeep each Korean field concise (under 80 characters) so the JSON fits within the token limit.',
         messages:[{role:'user',content:userContent}]})});
     if(!res.ok) throw new Error(`서버 오류 (${res.status}) — 잠시 후 다시 시도해주세요`);
@@ -1075,7 +1075,7 @@ async function generateExpressions() {
     const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        model:'claude-sonnet-4-5-20250929', max_tokens:1500,
         system:`You are an English expression coach for a Korean learner at ${profile.level} level (average fluency score ${profile.avgScore}/10).
 Respond ONLY with a valid JSON array (no markdown, no backticks) of exactly 3 expression objects.
 
