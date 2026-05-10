@@ -82,8 +82,16 @@
   .entry-delete:hover { color: #e44; background: #fee5e5; }
   .entry-body { padding: 16px 18px; }
   .entry-original { font-family: 'Lora', serif; font-size: 15px; color: var(--muted); font-style: italic; margin-bottom: 10px; line-height: 1.65; }
-  .entry-natural { font-family: 'Lora', serif; font-size: 16px; color: var(--ink); font-weight: 600; line-height: 1.65; margin-bottom: 12px; }
-  .entry-tips { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .entry-natural { font-family: 'Lora', serif; font-size: 16px; color: var(--ink); font-weight: 600; line-height: 1.65; margin-bottom: 14px; }
+  .entry-keyphrases { border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .key-phrase-item { background: var(--paper); border-radius: 10px; padding: 12px 14px; }
+  .key-phrase-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+  .key-phrase-word { font-weight: 700; font-size: 15px; color: var(--ink); font-family: 'Lora', serif; }
+  .key-phrase-meaning { font-size: 13px; color: var(--muted); }
+  .key-phrase-why { font-size: 13px; color: var(--ink); line-height: 1.6; margin-bottom: 6px; padding-left: 2px; }
+  .key-phrase-example { font-size: 13px; font-style: italic; color: var(--sage); padding: 6px 10px; background: var(--cream); border-radius: 6px; line-height: 1.55; }
+  .entry-practice-zone { background: var(--cream); border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .entry-practice-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 10px; letter-spacing: 0.3px; }
   .entry-encouragement { margin-top: 12px; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; font-size: 13px; line-height: 1.55; }
 
   .tip-explanation { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; margin-bottom: 2px; }
@@ -472,27 +480,37 @@ function buildEntryBlock(e, i, dateKey) {
   const miniDots=Array.from({length:10},(_,j)=>`<div class="mini-dot ${j<e.fluencyScore?'filled':''}"></div>`).join('');
   const timeTag=e.time?` <span style="color:var(--muted);font-size:11px;margin-left:4px;">${e.time}</span>`:'';
 
-  // Build tip explanation + fill-in-the-blank for each tip
-  const tipBlocks = (e.tips||[]).map((t,ti) => {
-    const fid = `fitb-${dateKey}-${i}-${ti}`;
-    const sentence = buildFITBSentence(e.naturalVersion, t.better, fid);
-    const hasBlank = sentence.includes('fitb-input');
-    return `
-      <div class="fitb-block">
-        <div class="tip-explanation">
-          <span style="color:var(--sage);font-weight:600;margin-right:6px;">→</span>
-          <span><strong>"${escapeHtml(t.original)}"</strong> 대신 <strong>"${escapeHtml(t.better)}"</strong>
-          <br><span style="color:var(--muted);font-size:12px;">${escapeHtml(t.reason)}</span></span>
-        </div>
-        ${hasBlank ? `
-        <div class="fitb-label" style="margin-top:10px;">✏️ 빈칸에 직접 써보세요 <span style="color:var(--accent);font-size:10px;">${t.category||''}</span></div>
-        <div class="fitb-sentence">${sentence}</div>
+  // Build key phrases list + multi-blank practice sentence
+  const keyPhrasesHtml = (e.keyPhrases||[]).map(kp => `
+    <div class="key-phrase-item">
+      <div class="key-phrase-header">
+        <span class="key-phrase-word">${escapeHtml(kp.phrase)}</span>
+        <span class="key-phrase-meaning">${escapeHtml(kp.meaning)}</span>
+      </div>
+      <div class="key-phrase-why">${escapeHtml(kp.why)}</div>
+      <div class="key-phrase-example">"${escapeHtml(kp.exampleFromText)}"</div>
+    </div>`).join('');
+
+  // Build multi-blank practice sentence from practiceText
+  const fid = `fitb-${dateKey}-${i}`;
+  let practiceHtml = '';
+  if (e.practiceText) {
+    let blankIdx = 0;
+    const practiceRendered = escapeHtml(e.practiceText).replace(/___/g, () => {
+      const bid = `${fid}-${blankIdx++}`;
+      return `<span class="fitb-blank"><input class="fitb-input" id="${bid}" size="12" autocomplete="off" spellcheck="false" placeholder="..."></span>`;
+    });
+    const answerPhrases = (e.keyPhrases||[]).map(kp=>kp.phrase).join(',');
+    practiceHtml = `
+      <div class="entry-practice-zone">
+        <div class="entry-practice-label">✏️ 직접 써보기</div>
+        <div class="fitb-sentence">${practiceRendered}</div>
         <div class="fitb-actions">
-          <button class="fitb-check-btn" onclick="checkFITB('${fid}','${escapeAttr(t.better)}')">확인</button>
+          <button class="fitb-check-btn" onclick="checkMultiFITB('${fid}', ${blankIdx}, '${escapeAttr(answerPhrases)}')">확인</button>
         </div>
-        <div class="fitb-feedback" id="fb-${fid}"></div>` : ''}
+        <div class="fitb-feedback" id="fb-${fid}"></div>
       </div>`;
-  }).join('');
+  }
 
   return `
     <div class="entry-block">
@@ -506,7 +524,8 @@ function buildEntryBlock(e, i, dateKey) {
       <div class="entry-body">
         <div class="entry-original">"${escapeHtml(e.original)}"</div>
         <div class="entry-natural">→ "${escapeHtml(e.naturalVersion)}"</div>
-        <div class="entry-tips">${tipBlocks}</div>
+        ${keyPhrasesHtml ? `<div class="entry-keyphrases">${keyPhrasesHtml}</div>` : ''}
+        ${practiceHtml}
         <div class="entry-encouragement">🌿 ${escapeHtml(e.encouragement)}</div>
       </div>
     </div>`;
@@ -594,6 +613,37 @@ function checkFITB(fid, correct) {
   if (!isCorrect) { setTimeout(()=>{ input.value=''; input.classList.remove('wrong'); }, 1400); }
 }
 
+function checkMultiFITB(fid, blankCount, answerPhrases) {
+  const phrases = answerPhrases.split(',').map(p => p.trim().toLowerCase());
+  const fb = document.getElementById('fb-' + fid);
+  let allCorrect = true;
+  let results = [];
+
+  for (let i = 0; i < blankCount; i++) {
+    const input = document.getElementById(`${fid}-${i}`);
+    if (!input) continue;
+    const userVal = input.value.trim().toLowerCase();
+    // Match against any of the key phrases (in any order)
+    const matched = phrases.find(phrase => {
+      const keyWords = phrase.split(/\s+/).filter(w => w.length > 2);
+      return userVal === phrase || keyWords.some(w => userVal.includes(w));
+    });
+    const isCorrect = !!matched;
+    input.classList.toggle('correct', isCorrect);
+    input.classList.toggle('wrong', !isCorrect);
+    if (!isCorrect) {
+      allCorrect = false;
+      setTimeout(() => { input.value = ''; input.classList.remove('wrong'); }, 1400);
+    }
+    results.push({ isCorrect, matched });
+  }
+
+  fb.className = 'fitb-feedback show ' + (allCorrect ? 'good' : 'bad');
+  fb.textContent = allCorrect
+    ? '✅ 완벽해요!'
+    : '틀린 칸을 다시 채워보세요.';
+}
+
 function deleteEntry(dateKey, index) {
   if(!confirm('이 문장을 삭제할까요?')) return;
   entries[dateKey].splice(index,1);
@@ -628,16 +678,30 @@ async function submitEntry() {
     const res=await fetch('/api/claude',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-5-20250929',max_tokens:1000,
-        system:`You are a natural English coach for Korean intermediate learners.
+        model:'claude-sonnet-4-5-20250929',max_tokens:1500,
+        system:`You are a fluent English coach for Korean intermediate learners. Your job is NOT just to fix errors — rewrite the text to sound like something a native English speaker would naturally say, then teach 2-3 key expressions from your rewrite.
+
 Respond ONLY with a JSON object (no markdown, no backticks):
 {
-  "naturalVersion": "most natural fluent version of the full sentence",
+  "naturalVersion": "Completely natural, fluent rewrite. Use native phrasing, idioms, contractions, and flow. Make it clearly better than the original.",
   "fluencyScore": 6,
-  "tips": [{"original":"buyed","better":"bought","reason":"buy의 과거형은 bought","category":"동사 활용"}],
+  "keyPhrases": [
+    {
+      "phrase": "insist that",
+      "meaning": "~하겠다고 고집하다",
+      "why": "'very stubborn that'은 콩글리시예요. 원어민은 'insisted that we order'처럼 써요.",
+      "exampleFromText": "My aunt insisted that we order more food."
+    }
+  ],
+  "practiceText": "My aunt ___ that we order more food. She always wants to ___ her family to good food.",
   "encouragement": "warm 1-sentence in Korean"
 }
-fluencyScore 1-10. tips 2-4 items. IMPORTANT: "better" must be a word or short phrase that appears verbatim in naturalVersion so we can highlight it. category: one of [동사 활용, 전치사, 관사, 어휘 선택, 표현 자연성, 문장 구조, 시제, 기타].`,
+
+Rules:
+- naturalVersion: truly native-sounding rewrite, not just error-corrected. Use contractions, natural connectors, idioms where appropriate.
+- keyPhrases: 2-3 items max. Pick the most useful expressions from naturalVersion. exampleFromText must be a sentence from naturalVersion containing phrase verbatim.
+- practiceText: 1-2 sentences from naturalVersion with 2-3 blanks (___) where keyPhrase words go. Test the most useful expressions.
+- fluencyScore: 1-10 integer.`,
         messages:[{role:'user',content:text}]
       })
     });
