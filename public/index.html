@@ -491,7 +491,9 @@ function buildEntryBlock(e, i, dateKey) {
       const bid = `${fid}-${blankIdx++}`;
       return `<span class="fitb-blank"><input class="fitb-input" id="${bid}" size="12" autocomplete="off" spellcheck="false" placeholder="..."></span>`;
     });
-    const answerPhrases = (e.keyPhrases||[]).map(kp=>kp.phrase).join(',');
+    const answerPhrases = (e.practiceAnswers && e.practiceAnswers.length)
+      ? e.practiceAnswers.join(',')
+      : (e.keyPhrases||[]).map(kp=>kp.phrase).join(',');
     practiceHtml = `
       <div class="entry-practice-zone">
         <div class="entry-practice-label">✏️ 직접 써보기</div>
@@ -613,24 +615,27 @@ function checkMultiFITB(fid, blankCount, answerPhrases) {
     const input = document.getElementById(`${fid}-${i}`);
     if (!input) continue;
     const userVal = input.value.trim().toLowerCase();
-    // Match blank i against phrase i (in order), fallback to any phrase
-    const targetPhrase = phrases[i] || phrases[phrases.length - 1];
-    const targetLower = targetPhrase.toLowerCase();
-    const keyWords = targetLower.split(/\s+/).filter(w => w.length > 2);
-    const isCorrect = userVal === targetLower || keyWords.some(w => userVal.includes(w));
+
+    // Use ordered match: phrases[i] is the correct answer for blank i
+    const correctAnswer = phrases[i] || phrases[phrases.length - 1];
+    const keyWords = correctAnswer.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const isCorrect = userVal === correctAnswer.toLowerCase() || keyWords.some(w => userVal.includes(w));
 
     input.classList.toggle('correct', isCorrect);
     input.classList.toggle('wrong', !isCorrect);
     if (!isCorrect) {
       allCorrect = false;
-      // Show answer immediately in the input
-      setTimeout(() => {
-        input.value = targetPhrase;
-        input.classList.remove('wrong');
-        input.classList.add('correct');
-        input.style.color = 'var(--sage)';
-        input.style.fontStyle = 'italic';
-      }, 800);
+      setTimeout((() => {
+        const inp = input;
+        const ans = correctAnswer;
+        return () => {
+          inp.value = ans;
+          inp.classList.remove('wrong');
+          inp.classList.add('correct');
+          inp.style.color = 'var(--sage)';
+          inp.style.fontStyle = 'italic';
+        };
+      })(), 800);
     }
   }
 
@@ -688,13 +693,15 @@ Respond ONLY with a JSON object (no markdown, no backticks):
     }
   ],
   "practiceText": "My aunt ___ that we order more food. She always wants to ___ her family to good food.",
+  "practiceAnswers": ["insisted that", "treat"],
   "encouragement": "warm 1-sentence in Korean"
 }
 
 Rules:
 - naturalVersion: truly native-sounding rewrite, not just error-corrected. Use contractions, natural connectors, idioms where appropriate.
 - keyPhrases: 3-5 items. Pick ALL notably useful or natural expressions from naturalVersion — idioms, collocations, vocabulary upgrades. exampleFromText must be a sentence from naturalVersion containing phrase verbatim.
-- practiceText: 2-3 sentences from naturalVersion with 3-5 blanks (___) covering as many keyPhrases as possible. CRITICAL: each blank (___) must replace exactly ONE complete phrase from keyPhrases — never split a multi-word phrase into multiple blanks. "go on dates" → one ___, not three separate ___.
+- practiceText: 2-3 sentences from naturalVersion with 3-5 blanks (___) covering as many keyPhrases as possible. CRITICAL: each blank (___) must replace exactly ONE complete phrase from keyPhrases — never split a multi-word phrase into multiple blanks.
+- practiceAnswers: array of phrases in the EXACT ORDER they appear as blanks in practiceText. e.g. if practiceText has 3 blanks, practiceAnswers must have exactly 3 items in left-to-right order.
 - fluencyScore: 1-10 integer.`,
         messages:[{role:'user',content:text}]
       })
@@ -713,7 +720,7 @@ Rules:
     if(!entries[dateKey]) entries[dateKey]=[];
     entries[dateKey].push({original:text,...result,time});
     // Auto-save keyPhrases to vocab as 'learned'
-    (result.keyPhrases||[]).forEach(kp => addToVocab(kp.phrase, kp.meaning, 'learned'));
+    (result.keyPhrases||[]).forEach(kp => addToVocab(kp.phrase, kp.meaning, 'learned', kp.exampleFromText));
     save();
     document.getElementById('loadingSlot').innerHTML='';
     document.getElementById('userInput').value='';
@@ -789,10 +796,10 @@ function completeMission(mission) {
 function getVocabItems() { return JSON.parse(localStorage.getItem('dailyEnglish_vocab') || '[]'); }
 function saveVocab(vocab) { localStorage.setItem('dailyEnglish_vocab', JSON.stringify(vocab)); }
 
-function addToVocab(phrase, meaning, type) {
+function addToVocab(phrase, meaning, type, example) {
   const vocab = getVocabItems();
   if (vocab.find(v => v.phrase.toLowerCase() === phrase.toLowerCase())) return;
-  vocab.unshift({ phrase, meaning, type, addedAt: getDateKey(new Date()) });
+  vocab.unshift({ phrase, meaning, type, example: example||'', addedAt: getDateKey(new Date()) });
   saveVocab(vocab);
 }
 
@@ -815,6 +822,7 @@ function renderVocab() {
         <div style="flex:1;">
           <div class="vocab-phrase">${escapeHtml(v.phrase)}</div>
           <div class="vocab-meaning">${escapeHtml(v.meaning)}</div>
+          ${v.example ? `<div style="font-size:12px;font-style:italic;color:var(--sage);margin-top:6px;padding:6px 10px;background:var(--cream);border-radius:6px;line-height:1.55;">"${escapeHtml(v.example)}"</div>` : ''}
           <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
             <span class="vocab-tag learned">새로 배운</span>
             <span style="font-size:10px;color:var(--muted);">${v.addedAt}</span>
@@ -1246,7 +1254,9 @@ newsSearchQuery: 4-6 word search query that would find real articles using this 
 }
 
 function saveLearnedExpr(index, phrase, meaning) {
-  addToVocab(phrase, meaning, 'learned');
+  const ex = cachedExprs && cachedExprs[index];
+  const example = ex ? ex.example : '';
+  addToVocab(phrase, meaning, 'learned', example);
   const btn = event.target;
   btn.textContent = '✅ 저장됨';
   btn.style.background = 'var(--blue)';
@@ -1345,12 +1355,9 @@ function switchTab(tab) {
   // trigger default subtab content
   if(tab==='learn') {
     const active = document.querySelector('#tab-learn .subtab.active');
-    const which = active ? active.textContent.trim() : '새 표현';
-    if(which==='새 표현') renderExpressions();
-    else if(which==='저장한 표현') renderVocab();
-
-    // default to expressions on first open
-    if(!active) renderExpressions();
+    const which = active ? active.textContent.trim() : '오늘의 추천';
+    if(!active || which==='오늘의 추천' || which==='새 표현') renderExpressions();
+    else if(which==='저장한 표현' || which==='내 사전') renderVocab();
   }
   if(tab==='record') {
     const active = document.querySelector('#tab-record .subtab.active');
@@ -1363,14 +1370,13 @@ function switchTab(tab) {
 function switchSubtab(parent, sub) {
   const panel = document.getElementById('tab-'+parent);
   panel.querySelectorAll('.subtab').forEach((t,i)=>{
-    const subs = parent==='learn' ? ['expressions','vocab','patterns'] : ['history','stats'];
+    const subs = parent==='learn' ? ['expressions','vocab'] : ['history','stats'];
     t.classList.toggle('active', subs[i]===sub);
   });
   panel.querySelectorAll('.subtab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('sub-'+sub).classList.add('active');
   if(sub==='expressions') renderExpressions();
-  else if(sub==='vocab') renderVocab(currentVocabTab);
-  else if(sub==='patterns') renderPatterns();
+  else if(sub==='vocab') renderVocab();
   else if(sub==='history') renderHistory();
   else if(sub==='stats') renderGrowth();
 }
