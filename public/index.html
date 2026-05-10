@@ -140,7 +140,9 @@
   .expr-phrase { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
   .expr-meaning { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
   .expr-example { font-family: 'Lora', serif; font-size: 15px; font-style: italic; color: var(--ink); line-height: 1.65; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; margin-bottom: 14px; }
-  .expr-context { font-size: 12px; color: var(--muted); margin-bottom: 14px; padding: 0 2px; line-height: 1.5; }
+  .expr-context { font-size: 13px; color: var(--ink); line-height: 1.7; margin-top: 10px; margin-bottom: 4px; padding: 12px 14px; background: var(--paper); border-left: 3px solid var(--sage); border-radius: 0 8px 8px 0; }
+  .expr-practice-zone { background: var(--cream); border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 14px; }
+  .expr-practice-zone-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 10px; letter-spacing: 0.3px; }
   .expr-divider { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
   .expr-practice-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; margin-bottom: 8px; }
   .expr-footer { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 12px; }
@@ -1043,13 +1045,14 @@ function renderExprCards(exprs) {
           <div class="expr-context">${escapeHtml(ex.context)}</div>
           ${newsLinkHtml}
           ${hasBlank ? `
-          <hr class="expr-divider">
-          <div class="expr-practice-label">✏️ 빈칸에 직접 써보세요</div>
-          <div class="fitb-sentence" style="margin-bottom:10px;">${sentence}</div>
-          <div class="fitb-actions">
-            <button class="fitb-check-btn" onclick="checkFITB('${fid}','${escapeAttr(ex.phrase)}')">확인</button>
-          </div>
-          <div class="fitb-feedback" id="fb-${fid}"></div>` : ''}
+          <div class="expr-practice-zone">
+            <div class="expr-practice-zone-label">✏️ 직접 써보기</div>
+            <div class="fitb-sentence">${sentence}</div>
+            <div class="fitb-actions">
+              <button class="fitb-check-btn" onclick="checkFITB('${fid}','${escapeAttr(ex.phrase)}')">확인</button>
+            </div>
+            <div class="fitb-feedback" id="fb-${fid}"></div>
+          </div>` : ''}
           <div class="expr-footer">
             <button class="expr-known-btn ${isKnown?'marked':''}" id="knownBtn-${i}" onclick="toggleKnown(${i}, '${escapeAttr(ex.phrase)}')">
               ${isKnown ? '✅ 이미 알고 있어요' : '이미 아는 표현이에요'}
@@ -1092,6 +1095,7 @@ Rules:
 - CRITICAL: "example" sentence must contain "phrase" VERBATIM (exact spelling) — no conjugation changes
 - "levelTag" should be one of: B1, B2, C1
 - For the news item, include: which outlet + rough time period + what story it appeared in
+- "context" must be 2-3 sentences in Korean explaining: (1) what situation/emotion it expresses, (2) why it's more natural than common Korean-English mistakes, (3) any useful usage tip
 
 Return exactly this structure:
 [
@@ -1099,7 +1103,7 @@ Return exactly this structure:
     "phrase": "stand by someone",
     "meaning": "누군가의 편을 들다, 지지하다",
     "example": "She always stand by someone she loves whenever things get hard.",
-    "context": "인간관계나 갈등 상황에서 자주 쓰는 표현이에요. 'stand in my side'보다 훨씬 자연스러워요.",
+    "context": "친한 사람이 힘든 상황에서 나를 지지해준다는 뜻으로 일상 대화에서 매우 자주 쓰여요. 'stand in my side'처럼 직역하면 어색하고, 원어민은 거의 항상 'stand by'를 써요. 감정적 유대감을 표현할 때 특히 자연스럽게 들려요.",
     "source": "topic",
     "levelTag": "B2",
     "newsSource": null,
@@ -1109,7 +1113,7 @@ Return exactly this structure:
     "phrase": "ramp up",
     "meaning": "급격히 늘리다, 강화하다",
     "example": "Governments worldwide decided to ramp up renewable energy investment.",
-    "context": "BBC, Reuters 등에서 기후변화·경제 관련 보도에 매우 자주 등장해요. 2023-2024년 에너지 전환 기사에서 특히 많이 쓰였어요.",
+    "context": "생산량, 투자, 노력 등을 빠르게 늘릴 때 쓰는 표현이에요. 'increase'보다 훨씬 역동적이고 긴박한 느낌을 줘서 뉴스나 비즈니스 맥락에서 특히 자주 등장해요. BBC, Reuters의 경제·기후 관련 기사에서 일주일에도 수십 번씩 볼 수 있어요.",
     "source": "news",
     "levelTag": "B2",
     "newsSource": "BBC News",
