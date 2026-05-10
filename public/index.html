@@ -248,8 +248,8 @@
   .vocab-tag.learned { background: #e8f0fb; color: var(--blue); }
   .vocab-tag.known { background: #edf7ef; color: var(--sage); }
   .vocab-tag.mission { background: #fdf0e8; color: var(--accent); }
-  .vocab-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px; line-height: 1; flex-shrink: 0; }
-  .vocab-remove:hover { color: #e44; }
+  .vocab-remove { background: none; border: 1.5px solid var(--line); border-radius: 12px; color: var(--muted); cursor: pointer; font-size: 11px; padding: 4px 10px; line-height: 1; flex-shrink: 0; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .vocab-remove:hover { color: #e44; border-color: #e44; }
 
   /* GROWTH TAB */
   .growth-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
@@ -303,7 +303,7 @@
       <h1>Daily English</h1>
       <div class="subtitle">오늘도 한 줄씩, 자연스럽게</div>
     </div>
-    <div class="streak-badge">✨ <span id="masteredCount">0</span>개 마스터</div>
+    <div class="streak-badge">✨ <span id="masteredCount">0</span>일 작성</div>
   </div>
 
   <!-- REVIEW BANNER -->
@@ -352,20 +352,11 @@
   <!-- LEARN TAB -->
   <div class="tab-panel" id="tab-learn">
     <div class="subtabs">
-      <div class="subtab active" onclick="switchSubtab('learn','expressions')">새 표현</div>
-      <div class="subtab"        onclick="switchSubtab('learn','vocab')">내 사전</div>
-      <div class="subtab"        onclick="switchSubtab('learn','patterns')">틀린 패턴</div>
+      <div class="subtab active" onclick="switchSubtab('learn','expressions')">오늘의 추천</div>
+      <div class="subtab"        onclick="switchSubtab('learn','vocab')">저장한 표현</div>
     </div>
     <div class="subtab-panel active" id="sub-expressions"><div id="expressionsContent"></div></div>
     <div class="subtab-panel"        id="sub-vocab"><div id="vocabContent"></div></div>
-    <div class="subtab-panel"        id="sub-patterns">
-      <div class="patterns-header">
-        <div class="patterns-header-title">자주 틀리는 표현 모음</div>
-        <button class="patterns-show-mastered" id="toggleMasteredBtn" onclick="toggleShowMastered()">✅ 해결된 것 보기</button>
-      </div>
-      <div id="patternsContent"></div>
-    </div>
-  </div>
 
   <!-- RECORD TAB -->
   <div class="tab-panel" id="tab-record">
@@ -614,34 +605,37 @@ function checkFITB(fid, correct) {
 }
 
 function checkMultiFITB(fid, blankCount, answerPhrases) {
-  const phrases = answerPhrases.split(',').map(p => p.trim().toLowerCase());
+  const phrases = answerPhrases.split(',').map(p => p.trim());
   const fb = document.getElementById('fb-' + fid);
   let allCorrect = true;
-  let results = [];
 
   for (let i = 0; i < blankCount; i++) {
     const input = document.getElementById(`${fid}-${i}`);
     if (!input) continue;
     const userVal = input.value.trim().toLowerCase();
-    // Match against any of the key phrases (in any order)
-    const matched = phrases.find(phrase => {
-      const keyWords = phrase.split(/\s+/).filter(w => w.length > 2);
-      return userVal === phrase || keyWords.some(w => userVal.includes(w));
-    });
-    const isCorrect = !!matched;
+    // Match blank i against phrase i (in order), fallback to any phrase
+    const targetPhrase = phrases[i] || phrases[phrases.length - 1];
+    const targetLower = targetPhrase.toLowerCase();
+    const keyWords = targetLower.split(/\s+/).filter(w => w.length > 2);
+    const isCorrect = userVal === targetLower || keyWords.some(w => userVal.includes(w));
+
     input.classList.toggle('correct', isCorrect);
     input.classList.toggle('wrong', !isCorrect);
     if (!isCorrect) {
       allCorrect = false;
-      setTimeout(() => { input.value = ''; input.classList.remove('wrong'); }, 1400);
+      // Show answer immediately in the input
+      setTimeout(() => {
+        input.value = targetPhrase;
+        input.classList.remove('wrong');
+        input.classList.add('correct');
+        input.style.color = 'var(--sage)';
+        input.style.fontStyle = 'italic';
+      }, 800);
     }
-    results.push({ isCorrect, matched });
   }
 
   fb.className = 'fitb-feedback show ' + (allCorrect ? 'good' : 'bad');
-  fb.textContent = allCorrect
-    ? '✅ 완벽해요!'
-    : '틀린 칸을 다시 채워보세요.';
+  fb.textContent = allCorrect ? '✅ 완벽해요!' : '정답을 확인해보세요.';
 }
 
 function deleteEntry(dateKey, index) {
@@ -699,8 +693,8 @@ Respond ONLY with a JSON object (no markdown, no backticks):
 
 Rules:
 - naturalVersion: truly native-sounding rewrite, not just error-corrected. Use contractions, natural connectors, idioms where appropriate.
-- keyPhrases: 2-3 items max. Pick the most useful expressions from naturalVersion. exampleFromText must be a sentence from naturalVersion containing phrase verbatim.
-- practiceText: 1-2 sentences from naturalVersion with 2-3 blanks (___) where keyPhrase words go. Test the most useful expressions.
+- keyPhrases: 3-5 items. Pick ALL notably useful or natural expressions from naturalVersion — idioms, collocations, vocabulary upgrades. exampleFromText must be a sentence from naturalVersion containing phrase verbatim.
+- practiceText: 2-3 sentences from naturalVersion with 3-5 blanks (___) covering as many keyPhrases as possible. CRITICAL: each blank (___) must replace exactly ONE complete phrase from keyPhrases — never split a multi-word phrase into multiple blanks. "go on dates" → one ___, not three separate ___.
 - fluencyScore: 1-10 integer.`,
         messages:[{role:'user',content:text}]
       })
@@ -718,6 +712,8 @@ Rules:
     const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     if(!entries[dateKey]) entries[dateKey]=[];
     entries[dateKey].push({original:text,...result,time});
+    // Auto-save keyPhrases to vocab as 'learned'
+    (result.keyPhrases||[]).forEach(kp => addToVocab(kp.phrase, kp.meaning, 'learned'));
     save();
     document.getElementById('loadingSlot').innerHTML='';
     document.getElementById('userInput').value='';
@@ -740,7 +736,8 @@ function save() {
 // ─── STATS ────────────────────────────────────────────────
 function updateStreak() { updateStats(); }
 function updateStats() {
-  document.getElementById('masteredCount').textContent = mastered.size;
+  const diaryDays = Object.keys(entries).filter(k => entries[k] && entries[k].length > 0).length;
+  document.getElementById('masteredCount').textContent = diaryDays;
 }
 
 // ─── MISSION ──────────────────────────────────────────────
@@ -801,42 +798,80 @@ function addToVocab(phrase, meaning, type) {
 
 function removeFromVocab(phrase) {
   saveVocab(getVocabItems().filter(v => v.phrase !== phrase));
-  renderVocab(currentVocabTab);
+  renderVocab();
 }
 
-let currentVocabTab = 'all';
-
-function renderVocab(tab) {
-  currentVocabTab = tab || 'all';
-  const cm = JSON.parse(localStorage.getItem('dailyEnglish_completedMissions') || '{}');
-  const missionPhrases = new Set(Object.values(cm).map(m => m.phrase));
-  let vocab = getVocabItems();
-  if (currentVocabTab === 'learned') vocab = vocab.filter(v => v.type === 'learned');
-  if (currentVocabTab === 'known')   vocab = vocab.filter(v => v.type === 'known');
-  if (currentVocabTab === 'mission') vocab = vocab.filter(v => missionPhrases.has(v.phrase));
+function renderVocab() {
+  const vocab = getVocabItems();
   const container = document.getElementById('vocabContent');
-  const tabBtns = `<div class="vocab-tabs">${[['all','전체'],['learned','새로 배운'],['known','이미 알던'],['mission','미션 완료']].map(([t,l])=>`<button class="vocab-tab ${currentVocabTab===t?'active':''}" data-tab="${t}" onclick="renderVocab('${t}')">${l}</button>`).join('')}</div>`;
+
+  // ── 저장한 표현 섹션 ──
+  let vocabHtml = '';
   if (!vocab.length) {
-    const msgs = {all:'아직 저장된 표현이 없어요.<br>새 표현 탭에서 배운 표현을 추가해보세요 💡',learned:'새로 배운 표현이 없어요.',known:'이미 아는 표현이 없어요.',mission:'미션 완료한 표현이 없어요 🎯'};
-    container.innerHTML = tabBtns + `<div class="vocab-empty">${msgs[currentVocabTab]}</div>`;
-    return;
-  }
-  const items = vocab.map(v => {
-    const isMD = missionPhrases.has(v.phrase);
-    return `<div class="vocab-item ${v.type==='known'?'known':''} ${isMD?'mission-done':''}">
-      <div style="flex:1;">
-        <div class="vocab-phrase">${escapeHtml(v.phrase)}</div>
-        <div class="vocab-meaning">${escapeHtml(v.meaning)}</div>
-        <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
-          <span class="vocab-tag ${v.type==='known'?'known':'learned'}">${v.type==='known'?'이미 알던 표현':'새로 배운 표현'}</span>
-          ${isMD?'<span class="vocab-tag mission">🎯 미션 완료</span>':''}
-          <span style="font-size:10px;color:var(--muted);align-self:center;">${v.addedAt}</span>
+    vocabHtml = '<div class="vocab-empty">아직 저장된 표현이 없어요.<br>오늘의 추천에서 배운 표현을 저장해보세요 💡</div>';
+  } else {
+    vocabHtml = vocab.map(v => `
+      <div class="vocab-item">
+        <div style="flex:1;">
+          <div class="vocab-phrase">${escapeHtml(v.phrase)}</div>
+          <div class="vocab-meaning">${escapeHtml(v.meaning)}</div>
+          <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span class="vocab-tag learned">새로 배운</span>
+            <span style="font-size:10px;color:var(--muted);">${v.addedAt}</span>
+          </div>
         </div>
-      </div>
-      <button class="vocab-remove" onclick="removeFromVocab('${escapeAttr(v.phrase)}')" title="삭제">×</button>
-    </div>`;
-  }).join('');
-  container.innerHTML = tabBtns + `<div class="vocab-list">${items}</div>`;
+        <button class="vocab-remove" onclick="removeFromVocab('${escapeAttr(v.phrase)}')" title="그만 볼게요">그만 볼게요</button>
+      </div>`).join('');
+  }
+
+  // ── 실수 패턴 섹션 ──
+  const allTips = [];
+  Object.entries(entries).sort().reverse().forEach(([dateKey, dayArr]) => {
+    const d = new Date(dateKey+'T00:00:00');
+    const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+    dayArr.forEach(e => (e.tips||[]).forEach(t => allTips.push({...t, dateStr, key:tipKey(t)})));
+  });
+
+  let patternsHtml = '';
+  if (allTips.length) {
+    const grouped = {}, seen = {};
+    allTips.forEach(t => {
+      const cat = t.category||'기타';
+      const dk = cat+'::'+t.original.toLowerCase();
+      if (!seen[dk]) { seen[dk]=true; if (!grouped[cat]) grouped[cat]=[]; grouped[cat].push(t); }
+    });
+    const active = Object.entries(grouped).sort((a,b)=>b[1].length-a[1].length)
+      .flatMap(([cat, tips]) => tips.filter(t => !mastered.has(t.key)).map(t => ({...t, cat})));
+    if (active.length) {
+      patternsHtml = active.map(t => `
+        <div class="vocab-item" style="border-left:3px solid #e44;">
+          <div style="flex:1;">
+            <div class="vocab-phrase" style="font-size:13px;"><span style="color:var(--muted);text-decoration:line-through;">${escapeHtml(t.original)}</span> → <span style="color:var(--ink);">${escapeHtml(t.better)}</span></div>
+            <div class="vocab-meaning">${escapeHtml(t.reason)}</div>
+            <div style="margin-top:4px;"><span class="vocab-tag" style="background:#fde8e8;color:#c0392b;">실수 패턴 · ${escapeHtml(t.cat)}</span></div>
+          </div>
+          <button class="vocab-remove" style="color:var(--sage);border-color:var(--sage);font-size:11px;" onclick="learnPattern('${t.key.replace(/'/g,"\'")}','${escapeAttr(t.better)}','${escapeAttr(t.reason)}')">배웠어요 ✓</button>
+        </div>`).join('');
+    }
+  }
+
+  const patternSection = patternsHtml ? `
+    <div style="margin-top:24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">🔴 아직 헷갈리는 표현</div>
+      <div class="vocab-list">${patternsHtml}</div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;">📚 저장한 표현</div>
+    <div class="vocab-list">${vocabHtml}</div>
+    ${patternSection}`;
+}
+
+function learnPattern(key, better, reason) {
+  mastered.add(key);
+  save(); updateStats();
+  addToVocab(better, reason, 'learned');
+  renderVocab();
 }
 
 // ─── GROWTH TAB ───────────────────────────────────────────
@@ -1118,11 +1153,8 @@ function renderExprCards(exprs) {
             <div class="fitb-feedback" id="fb-${fid}"></div>
           </div>` : ''}
           <div class="expr-footer">
-            <button class="expr-known-btn ${isKnown?'marked':''}" id="knownBtn-${i}" onclick="toggleKnown(${i}, '${escapeAttr(ex.phrase)}')">
-              ${isKnown ? '✅ 이미 알고 있어요' : '이미 아는 표현이에요'}
-            </button>
             <button class="expr-known-btn" style="border-color:var(--blue);color:var(--blue);" onclick="saveLearnedExpr(${i},'${escapeAttr(ex.phrase)}','${escapeAttr(ex.meaning)}')">
-              📚 사전에 저장
+              📚 저장하기
             </button>
           </div>
         </div>
@@ -1222,14 +1254,15 @@ function saveLearnedExpr(index, phrase, meaning) {
   btn.disabled = true;
 }
 
-function toggleKnown(index, phrase) {
+function toggleKnown(index, phrase, meaning) {
   const ex = cachedExprs && cachedExprs[index];
+  const resolvedMeaning = meaning || (ex && ex.meaning) || '';
   if (knownExprs.has(phrase)) {
     knownExprs.delete(phrase);
   } else {
     knownExprs.add(phrase);
-    // save to vocab as 'known'
-    if (ex) addToVocab(phrase, ex.meaning, 'known');
+    // Always save to vocab as 'known' — even if meaning is empty
+    addToVocab(phrase, resolvedMeaning, 'known');
     updateStats();
   }
   localStorage.setItem('dailyEnglish_knownExprs', JSON.stringify([...knownExprs]));
@@ -1271,12 +1304,33 @@ function openModal(dateKey,index){
   const d=new Date(dateKey+'T00:00:00');
   document.getElementById('modalDate').textContent=`${formatDateKo(d)} — ${index+1}번째`;
   const dots=Array.from({length:10},(_,i)=>`<div class="score-dot ${i<e.fluencyScore?'filled':''}"></div>`).join('');
-  const tips=e.tips.map(t=>`<div style="display:flex;gap:8px;font-size:13px;line-height:1.5;margin-bottom:8px;"><span style="color:var(--sage);font-weight:600;">→</span><span><strong>"${escapeHtml(t.original)}"</strong> → <strong>"${escapeHtml(t.better)}"</strong><br><span style="color:var(--muted);font-size:12px;">${escapeHtml(t.reason)}</span></span></div>`).join('');
+
+  // Support both old (tips) and new (keyPhrases) data structure
+  let phrasesHtml = '';
+  if (e.keyPhrases && e.keyPhrases.length) {
+    phrasesHtml = e.keyPhrases.map(kp=>`
+      <div style="margin-bottom:10px;padding:10px 12px;background:var(--paper);border-radius:8px;">
+        <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px;">
+          <strong style="font-size:14px;">${escapeHtml(kp.phrase)}</strong>
+          <span style="font-size:12px;color:var(--muted);">${escapeHtml(kp.meaning)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink);line-height:1.55;margin-bottom:4px;">${escapeHtml(kp.why)}</div>
+        <div style="font-size:12px;font-style:italic;color:var(--sage);">"${escapeHtml(kp.exampleFromText)}"</div>
+      </div>`).join('');
+  } else if (e.tips && e.tips.length) {
+    phrasesHtml = e.tips.map(t=>`
+      <div style="display:flex;gap:8px;font-size:13px;line-height:1.5;margin-bottom:8px;">
+        <span style="color:var(--sage);font-weight:600;">→</span>
+        <span><strong>"${escapeHtml(t.original)}"</strong> → <strong>"${escapeHtml(t.better)}"</strong><br>
+        <span style="color:var(--muted);font-size:12px;">${escapeHtml(t.reason)}</span></span>
+      </div>`).join('');
+  }
+
   document.getElementById('modalBody').innerHTML=`
     <div class="score-row"><span style="font-size:13px;color:var(--muted);">자연스러움</span><div class="score-dots">${dots}</div><span style="font-size:13px;color:var(--muted);margin-left:auto;">${e.fluencyScore}/10</span></div>
     <div style="margin-bottom:14px;"><div class="modal-label">📝 내가 쓴 표현</div><div style="font-family:'Lora',serif;font-size:15px;color:var(--muted);font-style:italic;line-height:1.65;">"${escapeHtml(e.original)}"</div></div>
     <div style="margin-bottom:14px;"><div class="modal-label">✨ 더 자연스러운 영어</div><div style="font-family:'Lora',serif;font-size:16px;color:var(--ink);font-weight:600;line-height:1.65;">"${escapeHtml(e.naturalVersion)}"</div></div>
-    <div style="margin-bottom:14px;"><div class="modal-label">💡 개선 포인트</div>${tips}</div>
+    <div style="margin-bottom:14px;"><div class="modal-label">💡 핵심 표현</div>${phrasesHtml}</div>
     <div style="padding:12px 14px;background:var(--paper-warm);border-radius:8px;font-size:13px;line-height:1.6;">🌿 ${escapeHtml(e.encouragement)}</div>`;
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1293,8 +1347,8 @@ function switchTab(tab) {
     const active = document.querySelector('#tab-learn .subtab.active');
     const which = active ? active.textContent.trim() : '새 표현';
     if(which==='새 표현') renderExpressions();
-    else if(which==='내 사전') renderVocab(currentVocabTab);
-    else if(which==='틀린 패턴') renderPatterns();
+    else if(which==='저장한 표현') renderVocab();
+
     // default to expressions on first open
     if(!active) renderExpressions();
   }
