@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daylogue — 오늘의 속마음, 영어로 기록하기</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Lora:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --forest: #1a3a2a;
+    --green: #4ade80;
+    --green-light: #bbf7d0;
+    --green-pale: #f0fdf4;
+    --ink: #111;
+    --muted: #888;
+    --line: #e8e8e8;
+    --bg: #ffffff;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-logo { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--forest); }
+  .nav-cta {
+    padding: 9px 22px;
+    background: var(--forest);
+    color: white;
+    border: none; border-radius: 100px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .nav-cta:hover { opacity: 0.8; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, #d1fae5 0%, transparent 70%);
+    z-index: 0;
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--green-pale);
+    border: 1px solid var(--green-light);
+    color: #166534;
+    padding: 5px 14px; border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+    margin-bottom: 28px;
+    letter-spacing: 0.3px;
+  }
+  .hero-badge span { width: 6px; height: 6px; background: var(--green); border-radius: 50%; display: inline-block; }
+
+  h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(42px, 8vw, 80px);
+    font-weight: 800;
+    color: var(--forest);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+    max-width: 720px;
+  }
+  h1 em { color: var(--green); font-style: normal; }
+
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--muted);
+    max-width: 480px;
+    margin-bottom: 40px;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  .hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-primary {
+    padding: 14px 32px;
+    background: var(--forest);
+    color: white; border: none; border-radius: 100px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { background: #0f2318; transform: translateY(-1px); }
+  .btn-secondary {
+    padding: 14px 28px;
+    background: none; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 100px;
+    font-size: 14px; font-weight: 400;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--forest); color: var(--forest); }
+
+  .hero-note {
+    margin-top: 16px;
+    font-size: 12px; color: #bbb;
+  }
+
+  /* PREVIEW MOCKUP */
+  .mockup-wrap {
+    margin-top: 72px;
+    position: relative;
+    max-width: 600px;
+    width: 100%;
+  }
+  .mockup {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(26,58,42,0.12), 0 0 0 1px rgba(26,58,42,0.04);
+  }
+  .mockup-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    background: white;
+  }
+  .mockup-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--forest); }
+  .mockup-badge { background: var(--forest); color: white; font-size: 10px; padding: 4px 10px; border-radius: 100px; }
+  .mockup-tabs { display: flex; gap: 3px; padding: 12px 16px 0; background: #f9f9f9; }
+  .mockup-tab { padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 500; color: #aaa; }
+  .mockup-tab.on { background: var(--forest); color: white; }
+  .mockup-body { padding: 16px; }
+  .mockup-prompt { background: var(--green-pale); border-left: 2px solid var(--green); border-radius: 0 8px 8px 0; padding: 10px 12px; margin-bottom: 12px; }
+  .mockup-prompt-label { font-size: 9px; letter-spacing: 1.5px; color: #166534; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
+  .mockup-prompt-text { font-family: 'Lora', serif; font-size: 13px; color: var(--forest); }
+  .mockup-write { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .mockup-write-label { padding: 10px 14px 0; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #bbb; font-weight: 600; }
+  .mockup-write-text { padding: 8px 14px 14px; font-family: 'Lora', serif; font-size: 13px; color: var(--ink); line-height: 1.7; }
+  .mockup-write-toolbar { padding: 8px 12px; border-top: 1px solid var(--line); background: #f9f9f9; display: flex; justify-content: flex-end; }
+  .mockup-btn { background: var(--forest); color: white; border: none; border-radius: 100px; padding: 6px 14px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+  /* FEATURES */
+  .section { padding: 100px 24px; max-width: 960px; margin: 0 auto; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 12px; }
+  .section-title { font-family: 'Outfit', sans-serif; font-size: clamp(28px, 4vw, 42px); font-weight: 700; color: var(--forest); line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .section-sub { font-size: 16px; color: var(--muted); max-width: 480px; line-height: 1.7; font-weight: 300; }
+
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 56px; }
+  .feature-card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .feature-card:hover { border-color: var(--green-light); box-shadow: 0 4px 24px rgba(74,222,128,0.1); }
+  .feature-icon { font-size: 28px; margin-bottom: 14px; }
+  .feature-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600; color: var(--forest); margin-bottom: 8px; }
+  .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .feature-highlight { display: inline-block; background: var(--green-pale); color: #166534; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; margin-top: 10px; }
+
+  /* HOW IT WORKS */
+  .how-wrap { background: var(--forest); border-radius: 24px; padding: 72px 48px; margin: 0 24px; }
+  .how-wrap .section-label { color: var(--green); }
+  .how-wrap .section-title { color: white; }
+  .how-wrap .section-sub { color: rgba(255,255,255,0.55); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; margin-top: 56px; }
+  .step { position: relative; }
+  .step-num { font-family: 'Outfit', sans-serif; font-size: 48px; font-weight: 800; color: rgba(74,222,128,0.2); line-height: 1; margin-bottom: 12px; }
+  .step-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600; color: white; margin-bottom: 8px; }
+  .step-desc { font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.7; }
+
+  /* PRIVACY HIGHLIGHT */
+  .privacy-band {
+    background: var(--green-pale);
+    border: 1px solid var(--green-light);
+    border-radius: 16px;
+    padding: 32px 40px;
+    margin: 0 24px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .privacy-icon { font-size: 40px; flex-shrink: 0; }
+  .privacy-title { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--forest); margin-bottom: 6px; }
+  .privacy-desc { font-size: 14px; color: #166534; line-height: 1.65; }
+
+  /* CTA */
+  .cta-section { text-align: center; padding: 100px 24px; }
+  .cta-title { font-family: 'Outfit', sans-serif; font-size: clamp(32px, 5vw, 52px); font-weight: 800; color: var(--forest); margin-bottom: 16px; letter-spacing: -1px; line-height: 1.1; }
+  .cta-sub { font-size: 16px; color: var(--muted); margin-bottom: 36px; font-weight: 300; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-logo { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--forest); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .footer-links a:hover { color: var(--forest); }
+  .footer-copy { font-size: 12px; color: #ccc; }
+
+  @media (max-width: 640px) {
+    nav { padding: 14px 20px; }
+    .how-wrap { padding: 48px 24px; margin: 0 16px; }
+    .privacy-band { flex-direction: column; padding: 24px; margin: 0 16px; }
+    footer { padding: 24px 20px; }
+    .footer-links { flex-wrap: wrap; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Daylogue</div>
+  <a href="https://english-diary-navy.vercel.app/" class="nav-cta">오늘 바로 기록하기 →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span></span> AI 영어 코치</div>
+  <h1>속마음을 영어로,<br><em>자연스럽게</em></h1>
+  <p class="hero-sub">오늘 있었던 일을 영어로 쓰면 AI가 원어민처럼 다듬어드려요. 교과서 영어 말고, 내 이야기로 배우는 영어.</p>
+  <div class="hero-actions">
+    <a href="https://english-diary-navy.vercel.app/" class="btn-primary">오늘 바로 기록하기 →</a>
+    <a href="#how" class="btn-secondary">어떻게 작동하나요?</a>
+  </div>
+  <p class="hero-note">무료 · 설치 없음 · 브라우저에서 바로</p>
+
+  <div class="mockup-wrap">
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-title">Daylogue</div>
+        <div class="mockup-badge">✦ 12일 작성</div>
+      </div>
+      <div class="mockup-tabs">
+        <div class="mockup-tab on">✏️ 오늘</div>
+        <div class="mockup-tab">💡 배움</div>
+        <div class="mockup-tab">📈 기록</div>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-prompt">
+          <div class="mockup-prompt-label">💡 오늘의 주제</div>
+          <div class="mockup-prompt-text">요즘 가장 자주 생각하는 것은?</div>
+        </div>
+        <div class="mockup-write">
+          <div class="mockup-write-label">영어로 자유롭게</div>
+          <div class="mockup-write-text">I've been worried about my brother lately. He seems to have a short temper these days...</div>
+          <div class="mockup-write-toolbar">
+            <button class="mockup-btn">교정 받기 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section">
+  <div class="section-label">특징</div>
+  <div class="section-title">영어 앱이 다 비슷하다고요?<br>Daylogue는 달라요</div>
+  <p class="section-sub">단어 암기도, 문법 강의도 없어요. 오늘 있었던 일을 쓰면, 그게 곧 영어 공부예요.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">✍️</div>
+      <div class="feature-title">내 이야기가 교재</div>
+      <div class="feature-desc">오늘 있었던 일, 감정, 생각을 영어로 써요. 내 삶이 곧 영어 수업이 돼요.</div>
+      <span class="feature-highlight">일기 형식</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🪄</div>
+      <div class="feature-title">원어민처럼 재작성</div>
+      <div class="feature-desc">틀린 부분을 지적하는 대신, AI가 통째로 자연스럽게 다시 써줘요. "이렇게 말했으면 더 자연스러웠어요."</div>
+      <span class="feature-highlight">AI 교정</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💡</div>
+      <div class="feature-title">맥락 속에서 표현 학습</div>
+      <div class="feature-desc">내 문장에서 핵심 표현을 뽑아 설명해줘요. 단어장이 아니라, 실제 쓰임새로 배워요.</div>
+      <span class="feature-highlight">표현 학습</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💭</div>
+      <div class="feature-title">심리상담사 코멘트</div>
+      <div class="feature-desc">영어 교정 너머, 일기에 담긴 감정을 심리상담사 관점에서 따뜻하게 돌봐드려요.</div>
+      <span class="feature-highlight">감정 케어</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <div class="feature-title">성장이 보여요</div>
+      <div class="feature-desc">fluency 점수, 저장한 표현, 캘린더로 내가 얼마나 늘었는지 한눈에 확인해요.</div>
+      <span class="feature-highlight">성장 기록</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">내 일기는 내 것</div>
+      <div class="feature-desc">모든 기록은 내 기기에만 저장돼요. 서버에 업로드되지 않아요.</div>
+      <span class="feature-highlight">완전한 프라이버시</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div id="how">
+  <div class="how-wrap">
+    <div class="section-label">사용법</div>
+    <div class="section-title">딱 3단계예요</div>
+    <p class="section-sub">복잡한 설정 없이. 브라우저 열고 바로 시작해요.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">오늘 있었던 일을 써요</div>
+        <div class="step-desc">완벽하지 않아도 돼요. 생각나는 대로, 틀려도 괜찮아요.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">AI가 자연스럽게 다듬어줘요</div>
+        <div class="step-desc">원어민이 실제로 쓰는 표현으로 바꿔주고, 핵심 표현을 설명해줘요.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">빈칸 채우며 연습해요</div>
+        <div class="step-desc">배운 표현을 내 문장 안에서 직접 써보며 완전히 내 것으로 만들어요.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY HIGHLIGHT -->
+<div style="max-width:960px;margin:80px auto;">
+  <div class="privacy-band">
+    <div class="privacy-icon">🔐</div>
+    <div>
+      <div class="privacy-title">일기는 내 기기에만 있어요</div>
+      <div class="privacy-desc">Daylogue는 일기 데이터를 서버에 저장하지 않아요. 모든 기록은 내 브라우저 로컬에만 저장되고, 누구도 볼 수 없어요. AI 교정 시에는 입력한 텍스트가 Anthropic API를 통해 처리되지만, 그 외 데이터는 외부로 나가지 않아요.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-title">오늘 속마음을<br>영어로 털어놓아요</div>
+  <p class="cta-sub">설치 없이, 무료로, 지금 바로 시작할 수 있어요.</p>
+  <a href="https://english-diary-navy.vercel.app/" class="btn-primary" style="font-size:16px;padding:16px 36px;">오늘 바로 기록하기 →</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Daylogue</div>
+  <div class="footer-links">
+    <a href="https://english-diary-navy.vercel.app/">앱 열기</a>
+    <a href="./privacy.html">개인정보처리방침</a>
+    <a href="mailto:qkr2tkd@gmail.com">문의</a>
+  </div>
+  <div class="footer-copy">© 2026 카인드웨이브 · qkr2tkd@gmail.com</div>
+</footer>
+
+</body>
+</html>
