@@ -1,8 +1,8 @@
 {
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
-    { "src": "/app", "dest": "/public/app.html" },
-    { "src": "/privacy", "dest": "/public/privacy.html" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/app", "dest": "/app.html" },
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
