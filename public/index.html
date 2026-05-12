@@ -93,6 +93,18 @@
   .entry-practice-zone { background: var(--cream); border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .entry-practice-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 10px; letter-spacing: 0.3px; }
   .entry-encouragement { margin-top: 12px; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; font-size: 13px; line-height: 1.55; }
+  .entry-counselor { margin-top: 10px; padding: 12px 14px; background: #f0eaf8; border-left: 3px solid #9b7ec8; border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.65; color: #4a3060; }
+  .settings-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; opacity: 0.6; transition: opacity 0.2s; }
+  .settings-btn:hover { opacity: 1; }
+  .settings-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 4px 0; }
+  .settings-label { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .settings-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; margin-top: 2px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #ddd; border-radius: 24px; transition: 0.2s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--sage); }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
 
   .tip-explanation { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; margin-bottom: 2px; }
   /* FILL-IN-THE-BLANK */
@@ -304,6 +316,7 @@
       <div class="subtitle">오늘도 한 줄씩, 자연스럽게</div>
     </div>
     <div class="streak-badge">✨ <span id="masteredCount">0</span>일 작성</div>
+    <button class="settings-btn" onclick="openSettings()" title="설정">⚙️</button>
   </div>
 
   <!-- REVIEW BANNER -->
@@ -367,6 +380,39 @@
     </div>
     <div class="subtab-panel active" id="sub-history"><div id="historyContent"></div></div>
     <div class="subtab-panel"        id="sub-stats"><div id="growthContent"></div></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-date">⚙️ 설정</div>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div style="padding:20px 0 8px;">
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">💭 심리상담사 피드백</div>
+          <div class="settings-desc">일기에 담긴 감정을 심리상담사 관점에서 따뜻하게 코멘트해드려요</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="counselorToggle" onchange="toggleCounselor(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;">
+
+      <div class="settings-label" style="margin-bottom:12px;">📦 데이터 백업</div>
+      <div class="settings-desc" style="margin-bottom:14px;">일기, 저장한 표현, 설정을 파일로 저장해두세요. 브라우저 캐시가 지워져도 복원할 수 있어요.</div>
+      <div style="display:flex;gap:10px;">
+        <button class="fitb-check-btn" style="flex:1;background:var(--sage);color:white;border:none;" onclick="exportData()">⬇ 내보내기</button>
+        <button class="fitb-check-btn" style="flex:1;" onclick="document.getElementById('importFile').click()">⬆ 불러오기</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+      </div>
+      <div id="importStatus" style="font-size:12px;color:var(--sage);margin-top:10px;text-align:center;"></div>
+    </div>
   </div>
 </div>
 
@@ -521,6 +567,7 @@ function buildEntryBlock(e, i, dateKey) {
         ${keyPhrasesHtml ? `<div class="entry-keyphrases">${keyPhrasesHtml}</div>` : ''}
         ${practiceHtml}
         <div class="entry-encouragement">🌿 ${escapeHtml(e.encouragement)}</div>
+        ${settings.counselor && e.counselorNote ? `<div class="entry-counselor">💭 ${escapeHtml(e.counselorNote)}</div>` : ''}
       </div>
     </div>`;
 }
@@ -695,7 +742,8 @@ Respond ONLY with a JSON object (no markdown, no backticks):
   ],
   "practiceText": "My aunt ___ that we order more food. She always wants to ___ her family to good food.",
   "practiceAnswers": ["insisted that", "treat"],
-  "encouragement": "warm 1-sentence in Korean"
+  "encouragement": "warm 1-sentence in Korean",
+  "counselorNote": null
 }
 
 Rules:
@@ -703,7 +751,8 @@ Rules:
 - keyPhrases: 3-5 items. Pick ALL notably useful or natural expressions from naturalVersion — idioms, collocations, vocabulary upgrades. exampleFromText must be a sentence from naturalVersion containing phrase verbatim.
 - practiceText: 2-3 sentences from naturalVersion with 3-5 blanks (___) covering as many keyPhrases as possible. CRITICAL: each blank (___) must replace exactly ONE complete phrase from keyPhrases — never split a multi-word phrase into multiple blanks.
 - practiceAnswers: array of phrases in the EXACT ORDER they appear as blanks in practiceText. e.g. if practiceText has 3 blanks, practiceAnswers must have exactly 3 items in left-to-right order.
-- fluencyScore: 1-10 integer.`,
+- fluencyScore: 1-10 integer.
+- counselorNote: if the diary text contains any emotions, stress, relationships, or personal experiences worth reflecting on, write 3-4 sentences in Korean combining warm empathy AND a gentle cognitive-behavioral insight. Format: first acknowledge the feeling warmly, then offer one reframing thought or observation a counselor might share. If the text is purely factual with no emotional content, set to null.`,
         messages:[{role:'user',content:text}]
       })
     });
@@ -1083,6 +1132,8 @@ function renderPatterns() {
 let knownExprs = new Set(JSON.parse(localStorage.getItem('dailyEnglish_knownExprs') || '[]'));
 let cachedExprs = JSON.parse(localStorage.getItem('dailyEnglish_cachedExprs') || 'null');
 let cachedExprsDate = localStorage.getItem('dailyEnglish_cachedExprsDate') || '';
+let settings = JSON.parse(localStorage.getItem('dailyEnglish_settings') || '{"counselor":false}');
+function saveSettings() { localStorage.setItem('dailyEnglish_settings', JSON.stringify(settings)); }
 
 function computeLevelProfile() {
   // average fluency score from recent entries
@@ -1345,6 +1396,63 @@ function openModal(dateKey,index){
     <div style="padding:12px 14px;background:var(--paper-warm);border-radius:8px;font-size:13px;line-height:1.6;">🌿 ${escapeHtml(e.encouragement)}</div>`;
   document.getElementById('modalOverlay').classList.add('open');
 }
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    entries:    JSON.parse(localStorage.getItem('dailyEnglish_entries')    || '{}'),
+    vocab:      JSON.parse(localStorage.getItem('dailyEnglish_vocab')      || '[]'),
+    knownExprs: JSON.parse(localStorage.getItem('dailyEnglish_knownExprs') || '[]'),
+    mastered:   JSON.parse(localStorage.getItem('dailyEnglish_mastered')   || '[]'),
+    settings:   JSON.parse(localStorage.getItem('dailyEnglish_settings')   || '{}'),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `daily-english-${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version || !data.entries) throw new Error('올바른 백업 파일이 아니에요.');
+      if (!confirm('현재 데이터를 백업 파일로 덮어씌울까요? 기존 데이터는 사라져요.')) return;
+      if (data.entries)    localStorage.setItem('dailyEnglish_entries',    JSON.stringify(data.entries));
+      if (data.vocab)      localStorage.setItem('dailyEnglish_vocab',      JSON.stringify(data.vocab));
+      if (data.knownExprs) localStorage.setItem('dailyEnglish_knownExprs', JSON.stringify(data.knownExprs));
+      if (data.mastered)   localStorage.setItem('dailyEnglish_mastered',   JSON.stringify(data.mastered));
+      if (data.settings)   localStorage.setItem('dailyEnglish_settings',   JSON.stringify(data.settings));
+      // Reload app state
+      load(); updateStats(); renderTodayEntries();
+      document.getElementById('importStatus').textContent = `✅ 복원 완료 (${data.exportedAt?.slice(0,10) || '날짜 불명'} 백업)`;
+    } catch(err) {
+      document.getElementById('importStatus').textContent = '❌ ' + err.message;
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function openSettings() {
+  document.getElementById('counselorToggle').checked = settings.counselor;
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(e) {
+  if (!e || e.target === document.getElementById('settingsOverlay'))
+    document.getElementById('settingsOverlay').classList.remove('open');
+}
+function toggleCounselor(val) {
+  settings.counselor = val;
+  saveSettings();
+  renderTodayEntries();
+}
+
 function closeModal(e){if(e.target.id==='modalOverlay') document.getElementById('modalOverlay').classList.remove('open');}
 
 // ─── TABS ─────────────────────────────────────────────────
