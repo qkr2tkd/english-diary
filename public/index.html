@@ -94,7 +94,9 @@
   .entry-practice-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 10px; letter-spacing: 0.3px; }
   .entry-encouragement { margin-top: 12px; padding: 10px 14px; background: var(--paper-warm); border-radius: 8px; font-size: 13px; line-height: 1.55; }
   .entry-counselor { margin-top: 10px; padding: 12px 14px; background: #f0eaf8; border-left: 3px solid #9b7ec8; border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.65; color: #4a3060; }
-  .settings-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; opacity: 0.6; transition: opacity 0.2s; }
+  .write-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 14px; min-height: 140px; }
+  .settings-body { padding: 20px; }
+  .settings-section-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
   .settings-btn:hover { opacity: 1; }
   .settings-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 4px 0; }
   .settings-label { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
@@ -390,7 +392,7 @@
       <div class="modal-date">⚙️ 설정</div>
       <button class="modal-close" onclick="closeSettings()">×</button>
     </div>
-    <div style="padding:20px 0 8px;">
+    <div style="padding:20px;">
       <div class="settings-row">
         <div>
           <div class="settings-label">💭 심리상담사 피드백</div>
@@ -404,7 +406,7 @@
 
       <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;">
 
-      <div class="settings-label" style="margin-bottom:12px;">📦 데이터 백업</div>
+      <div class="settings-label" style="margin-bottom:6px;">📦 데이터 백업</div>
       <div class="settings-desc" style="margin-bottom:14px;">일기, 저장한 표현, 설정을 파일로 저장해두세요. 브라우저 캐시가 지워져도 복원할 수 있어요.</div>
       <div style="display:flex;gap:10px;">
         <button class="fitb-check-btn" style="flex:1;background:var(--sage);color:white;border:none;" onclick="exportData()">⬇ 내보내기</button>
@@ -720,7 +722,9 @@ async function submitEntry() {
   const text=document.getElementById('userInput').value.trim();
   if(text.length<5){alert('영어로 좀 더 써주세요! (최소 5자)');return;}
   const btn=document.getElementById('submitBtn'); btn.disabled=true;
-  document.getElementById('loadingSlot').innerHTML=`<div class="loading"><div class="loading-dots"><span></span><span></span><span></span></div><div class="loading-text">교정하는 중...</div></div>`;
+  // Show loading state inside the write section itself
+  const writeSection = document.querySelector('.write-section');
+  writeSection.innerHTML=`<div class="write-loading"><div class="loading-dots"><span></span><span></span><span></span></div><div class="loading-text">교정하는 중...</div></div>`;
   try {
     const res=await fetch('/api/claude',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -772,17 +776,37 @@ Rules:
     // Auto-save keyPhrases to vocab as 'learned'
     (result.keyPhrases||[]).forEach(kp => addToVocab(kp.phrase, kp.meaning, 'learned', kp.exampleFromText));
     save();
-    document.getElementById('loadingSlot').innerHTML='';
-    document.getElementById('userInput').value='';
-    document.getElementById('charCount').textContent='0자';
+    restoreWriteSection();
     renderTodayEntries(); updateWriteLabel(); updateStreak();
     setTimeout(()=>{
       const blocks=document.querySelectorAll('.entry-block');
       if(blocks.length) blocks[blocks.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});
     },150);
   } catch(err) {
-    document.getElementById('loadingSlot').innerHTML=`<div style="padding:16px;color:#e44;text-align:center;font-size:14px;background:white;border:1.5px solid var(--line);border-radius:12px;margin-bottom:16px;">⚠️ ${err.message||'오류가 발생했습니다.'}<br><small style="color:var(--muted)">잠시 후 다시 시도해주세요</small></div>`;
+    restoreWriteSection();
+    setTimeout(()=>{
+      const wa = document.getElementById('userInput');
+      if(wa) wa.style.borderTop = '2px solid #e44';
+      const lbl = document.getElementById('writeLabel');
+      if(lbl) lbl.innerHTML = `<span style="color:#e44;">⚠️ ${err.message||'오류가 발생했습니다.'} 잠시 후 다시 시도해주세요</span>`;
+    }, 50);
   } finally { btn.disabled=false; }
+}
+
+function restoreWriteSection() {
+  const ws = document.querySelector('.write-section');
+  if (!ws) return;
+  ws.innerHTML = `
+    <div class="write-label" id="writeLabel">영어로 자유롭게 써보세요</div>
+    <textarea class="write-area" id="userInput" placeholder="Today I went to the store and buyed some food..."></textarea>
+    <div class="write-toolbar">
+      <span class="char-count" id="charCount">0자</span>
+      <div class="toolbar-right">
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="음성">🎤</button>
+        <button class="submit-btn" id="submitBtn" onclick="submitEntry()">교정 받기 →</button>
+      </div>
+    </div>`;
+  document.getElementById('userInput').addEventListener('input', updateCharCount);
 }
 
 function save() {
@@ -935,56 +959,88 @@ function learnPattern(key, better, reason) {
 // ─── GROWTH TAB ───────────────────────────────────────────
 function renderGrowth() {
   const allEntries = Object.values(entries).flat();
-  const now = new Date(), year = now.getFullYear(), month = now.getMonth();
-  let thisMonth = 0;
-  for (let d=1;d<=new Date(year,month+1,0).getDate();d++) {
-    const k=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    if(entries[k]?.length) thisMonth++;
+  const allDays = Object.keys(entries).filter(k => entries[k].length);
+  const now = new Date();
+  const { year, month } = calendarMonth;
+
+  // Stats
+  let thisMonthDays = 0;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for (let d=1; d<=daysInMonth; d++) {
+    const k = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (entries[k]?.length) thisMonthDays++;
   }
-  const first10 = allEntries.slice(0,10), last10 = allEntries.slice(-10);
-  const avg = arr => arr.length ? (arr.reduce((s,e)=>s+(e.fluencyScore||6),0)/arr.length).toFixed(1) : null;
-  const avgFirst = avg(first10), avgLast = avg(last10);
-  const improvement = avgFirst && avgLast ? (avgLast - avgFirst).toFixed(1) : null;
-  const wc = e => (e.naturalVersion||e.original||'').split(/\s+/).filter(Boolean).length;
-  const avgWF = first10.length ? Math.round(first10.reduce((s,e)=>s+wc(e),0)/first10.length) : null;
-  const avgWL = last10.length  ? Math.round(last10.reduce((s,e)=>s+wc(e),0)/last10.length)  : null;
-  const firstE = allEntries[0], lastE = allEntries[allEntries.length-1];
-  const mAgo = new Date(); mAgo.setMonth(mAgo.getMonth()-1);
-  const mAgoKey = getDateKey(mAgo);
-  const mAgoEntries = Object.entries(entries).filter(([k])=>k<=mAgoKey).flatMap(([,v])=>v);
-  const mAgoE = mAgoEntries[mAgoEntries.length-1];
-  const totalTips = allEntries.flatMap(e=>e.tips||[]).length;
+  const vocab = getVocabItems();
 
-  const statsHtml = `<div class="growth-stats">
-    <div class="growth-stat"><div class="growth-stat-num">${allEntries.length}</div><div class="growth-stat-label">총 문장 수</div></div>
-    <div class="growth-stat"><div class="growth-stat-num">${thisMonth}</div><div class="growth-stat-label">이번 달 쓴 날</div></div>
-    <div class="growth-stat"><div class="growth-stat-num">${mastered.size}</div><div class="growth-stat-label">마스터 표현</div></div>
-  </div>`;
+  // Fluency trend - last 7 entries
+  const recent7 = allEntries.slice(-7);
+  const sparkBars = recent7.map(e => {
+    const h = Math.round((e.fluencyScore||5) / 10 * 32);
+    const col = e.fluencyScore >= 8 ? 'var(--sage)' : e.fluencyScore >= 6 ? 'var(--accent-light)' : '#e0c4b0';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="width:20px;height:${h}px;background:${col};border-radius:3px;min-height:4px;"></div>
+      <div style="font-size:9px;color:var(--muted);">${e.fluencyScore}</div>
+    </div>`;
+  }).join('');
 
-  const impHtml = improvement ? `<div class="growth-section"><div class="growth-section-title">실력 변화</div>
-    <div class="growth-improvement"><div class="growth-improvement-icon">${parseFloat(improvement)>=0?'📈':'📊'}</div>
-      <div class="growth-improvement-text">fluency 점수 <strong>${avgFirst} → ${avgLast}</strong>${parseFloat(improvement)>0?` <strong>(+${improvement}점 향상!)</strong>`:' (유지 중)'}</div></div>
-    ${avgWF&&avgWL?`<div class="growth-improvement"><div class="growth-improvement-icon">✍️</div>
-      <div class="growth-improvement-text">문장 평균 길이 <strong>${avgWF}단어 → ${avgWL}단어</strong>${avgWL>avgWF?' <strong>(더 풍부해졌어요!)</strong>':''}</div></div>`:''}
-    ${mastered.size?`<div class="growth-improvement"><div class="growth-improvement-icon">✅</div>
-      <div class="growth-improvement-text">총 <strong>${totalTips}개</strong> 실수 중 <strong>${mastered.size}개</strong> 마스터 완료</div></div>`:''}
-  </div>` : '';
+  // Month name
+  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
 
-  const cmpHtml = (firstE||lastE) ? `<div class="growth-section"><div class="growth-section-title">처음 vs 지금</div><div class="growth-compare">
-    ${firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>처음 쓴 문장</span><span class="growth-score-pill">${firstE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(firstE.original)}"</div></div>`:''}
-    ${lastE&&lastE!==firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>가장 최근 문장</span><span class="growth-score-pill high">${lastE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(lastE.original)}"</div></div>`:''}
-    ${mAgoE&&mAgoE!==firstE?`<div class="growth-compare-row"><div class="growth-compare-label"><span>한 달 전 문장</span><span class="growth-score-pill">${mAgoE.fluencyScore}/10</span></div><div class="growth-compare-text">"${escapeHtml(mAgoE.original)}"</div></div>`:''}
-  </div></div>` : '';
+  document.getElementById('growthContent').innerHTML = `
+    <!-- Stats row -->
+    <div class="growth-stats">
+      <div class="growth-stat"><div class="growth-stat-num">${allDays.length}</div><div class="growth-stat-label">총 작성일</div></div>
+      <div class="growth-stat"><div class="growth-stat-num">${thisMonthDays}</div><div class="growth-stat-label">${monthNames[month]} 작성일</div></div>
+      <div class="growth-stat"><div class="growth-stat-num">${vocab.length}</div><div class="growth-stat-label">저장한 표현</div></div>
+    </div>
 
-  const emptyHtml = !allEntries.length ? '<div class="vocab-empty">아직 일기가 없어요.<br>오늘 첫 문장을 써보면 성장 기록이 시작돼요 ✍️</div>' : '';
+    <!-- Fluency spark -->
+    ${recent7.length >= 2 ? `
+    <div class="growth-section">
+      <div class="growth-section-title">최근 fluency 점수</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;padding:8px 0 4px;">${sparkBars}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">최근 ${recent7.length}개 문장 기준</div>
+    </div>` : ''}
 
-  document.getElementById('growthContent').innerHTML = statsHtml + emptyHtml + impHtml + cmpHtml +
-    `<div class="growth-section"><div class="growth-section-title">이번 달 출석</div><div class="calendar-grid" id="calendarGrid"></div></div>
-     <div class="growth-section"><div class="growth-section-title">월별 심층 리포트</div>
-       <button class="growth-report-btn" onclick="generateGrowthReport()" id="growthReportBtn">✨ AI 실력 분석 받기</button>
-       <div class="growth-report-result" id="growthReportResult"></div>
-     </div>`;
+    <!-- Calendar -->
+    <div class="growth-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="growth-section-title" style="margin-bottom:0;">${year}년 ${monthNames[month]}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="shiftCalendarMonth(-1)" style="background:none;border:1.5px solid var(--line);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">‹</button>
+          ${!isCurrentMonth ? `<button onclick="resetCalendarMonth()" style="background:none;border:1.5px solid var(--line);border-radius:8px;padding:0 8px;height:28px;cursor:pointer;font-size:11px;color:var(--muted);">오늘</button>` : ''}
+          <button onclick="shiftCalendarMonth(1)" style="background:none;border:1.5px solid var(--line);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">›</button>
+        </div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <!-- AI Report -->
+    <div class="growth-section">
+      <div class="growth-section-title">월별 심층 리포트</div>
+      <button class="growth-report-btn" onclick="generateGrowthReport()" id="growthReportBtn">✨ AI 실력 분석 받기</button>
+      <div class="growth-report-result" id="growthReportResult"></div>
+    </div>`;
+
   renderCalendar();
+}
+
+function shiftCalendarMonth(delta) {
+  let { year, month } = calendarMonth;
+  month += delta;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  // Don't go into the future
+  const now = new Date();
+  if (year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth())) return;
+  calendarMonth = { year, month };
+  renderGrowth();
+}
+
+function resetCalendarMonth() {
+  calendarMonth = { year: new Date().getFullYear(), month: new Date().getMonth() };
+  renderGrowth();
 }
 
 async function generateGrowthReport() {
@@ -1036,17 +1092,48 @@ async function generateGrowthReport() {
 }
 
 function renderCalendar() {
-  const el=document.getElementById('calendarGrid'); if(!el) return;
-  const now=new Date(),year=now.getFullYear(),month=now.getMonth();
-  const firstDay=new Date(year,month,1).getDay(),daysInMonth=new Date(year,month+1,0).getDate(),todayKey=getDateKey(now);
-  let html=['일','월','화','수','목','금','토'].map(l=>`<div class="cal-label">${l}</div>`).join('');
-  for(let i=0;i<firstDay;i++) html+='<div></div>';
-  for(let d=1;d<=daysInMonth;d++){
-    const key=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const count=(entries[key]||[]).length,isToday=key===todayKey;
-    html+=`<div class="cal-day ${count?'done':''} ${isToday?'today':''}">${d}${count>1?`<span class="cal-count">${count}</span>`:''}</div>`;
+  const el = document.getElementById('calendarGrid'); if (!el) return;
+  const now = new Date();
+  const { year, month } = calendarMonth;
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayKey = getDateKey(now);
+
+  let html = ['일','월','화','수','목','금','토'].map(l => `<div class="cal-label">${l}</div>`).join('');
+  for (let i=0; i<firstDay; i++) html += '<div></div>';
+  for (let d=1; d<=daysInMonth; d++) {
+    const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEntries = entries[key] || [];
+    const count = dayEntries.length;
+    const isToday = key === todayKey;
+    // Color by avg fluency score
+    let scoreClass = '';
+    if (count) {
+      const avg = dayEntries.reduce((s,e) => s+(e.fluencyScore||6), 0) / count;
+      scoreClass = avg >= 8 ? 'score-high' : avg >= 6 ? 'score-mid' : 'score-low';
+    }
+    const clickable = count > 0;
+    html += `<div class="cal-day ${count?'done':''} ${scoreClass} ${isToday?'today':''} ${clickable?'clickable':''}"
+      ${clickable ? `onclick="openDayModal('${key}')"` : ''}
+      title="${count ? count+'개 일기' : ''}"
+    >${d}${count>1?`<span class="cal-count">${count}</span>`:''}</div>`;
   }
-  el.innerHTML=html;
+  el.innerHTML = html;
+}
+
+function openDayModal(dateKey) {
+  const dayArr = entries[dateKey] || [];
+  if (!dayArr.length) return;
+  if (dayArr.length === 1) { openModal(dateKey, 0); return; }
+  // Multiple entries: show picker
+  const d = new Date(dateKey+'T00:00:00');
+  document.getElementById('modalDate').textContent = formatDateKo(d);
+  document.getElementById('modalBody').innerHTML = dayArr.map((e, i) => `
+    <div onclick="openModal('${dateKey}',${i})" style="padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--paper);">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${i+1}번째 · ${e.time||''} · ${e.fluencyScore}/10</div>
+      <div style="font-size:13px;font-style:italic;color:var(--ink);line-height:1.5;">"${escapeHtml((e.original||'').slice(0,80))}${e.original?.length>80?'...':''}"</div>
+    </div>`).join('');
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
 // ─── PATTERNS ─────────────────────────────────────────────
@@ -1133,6 +1220,7 @@ let knownExprs = new Set(JSON.parse(localStorage.getItem('dailyEnglish_knownExpr
 let cachedExprs = JSON.parse(localStorage.getItem('dailyEnglish_cachedExprs') || 'null');
 let cachedExprsDate = localStorage.getItem('dailyEnglish_cachedExprsDate') || '';
 let settings = JSON.parse(localStorage.getItem('dailyEnglish_settings') || '{"counselor":false}');
+let calendarMonth = { year: new Date().getFullYear(), month: new Date().getMonth() };
 function saveSettings() { localStorage.setItem('dailyEnglish_settings', JSON.stringify(settings)); }
 
 function computeLevelProfile() {
@@ -1338,16 +1426,31 @@ function toggleKnown(index, phrase, meaning) {
 }
 
 // ─── HISTORY ──────────────────────────────────────────────
-function renderHistory() {
-  const allDays=Object.keys(entries).filter(k=>entries[k].length).sort().reverse();
-  if(!allDays.length){
-    document.getElementById('historyContent').innerHTML='<div class="history-empty">아직 기록이 없어요.<br>오늘 첫 영어 일기를 써보세요 ✍️</div>';
+function renderHistory(jumpTo) {
+  const allDays = Object.keys(entries).filter(k => entries[k].length).sort().reverse();
+  if (!allDays.length) {
+    document.getElementById('historyContent').innerHTML = '<div class="history-empty">아직 기록이 없어요.<br>오늘 첫 영어 일기를 써보세요 ✍️</div>';
     return;
   }
-  const html=allDays.map(dateKey=>{
-    const dayArr=entries[dateKey],d=new Date(dateKey+'T00:00:00');
-    const rows=dayArr.map((e,i)=>{
-      const dots=Array.from({length:10},(_,j)=>`<div class="history-dot ${j<e.fluencyScore?'filled':''}"></div>`).join('');
+
+  // Date picker dropdown
+  const pickerOptions = allDays.map(k => {
+    const d = new Date(k+'T00:00:00');
+    const selected = k === jumpTo ? 'selected' : '';
+    return `<option value="${k}" ${selected}>${formatDateKo(d)} (${entries[k].length}문장)</option>`;
+  }).join('');
+  const picker = `<div style="margin-bottom:16px;">
+    <select onchange="renderHistory(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:white;cursor:pointer;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path fill=%22%23888%22 d=%22M6 8L0 0h12z%22/></svg>');background-repeat:no-repeat;background-position:right 14px center;">
+      ${pickerOptions}
+    </select>
+  </div>`;
+
+  // Show selected day or all
+  const daysToShow = jumpTo ? allDays.filter(k => k === jumpTo) : allDays;
+  const html = daysToShow.map(dateKey => {
+    const dayArr = entries[dateKey], d = new Date(dateKey+'T00:00:00');
+    const rows = dayArr.map((e,i) => {
+      const dots = Array.from({length:10},(_,j) => `<div class="history-dot ${j<e.fluencyScore?'filled':''}"></div>`).join('');
       return `<div class="history-entry-row" onclick="openModal('${dateKey}',${i})">
         <div class="history-entry-original">${escapeHtml(e.original)}</div>
         <div class="history-entry-natural">"${escapeHtml(e.naturalVersion)}"</div>
@@ -1358,7 +1461,8 @@ function renderHistory() {
       <div class="history-day-header"><div class="history-day-date">${formatDateKo(d)}</div><div class="history-day-count">${dayArr.length}문장</div></div>
       ${rows}</div>`;
   }).join('');
-  document.getElementById('historyContent').innerHTML=`<div class="history-list">${html}</div>`;
+
+  document.getElementById('historyContent').innerHTML = picker + `<div class="history-list">${html}</div>`;
 }
 
 function openModal(dateKey,index){
